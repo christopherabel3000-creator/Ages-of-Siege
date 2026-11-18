@@ -13,7 +13,7 @@ Built in plain HTML, CSS and JavaScript. Playable in a browser (GitHub Pages) an
 | Genre | Tower defense, played from the top of your own wall |
 | Setting | Starts as a medieval castle and slowly modernizes over time |
 | Modes | Campaign and Endless |
-| Wave length | About 5 minutes on average |
+| Wave length | About 5 minutes on average; shorter waves early on are fine, and fast players finish sooner (never more enemies for killing quickly) |
 | Campaign failure | You restart the failed wave. You cannot go back to the shop to change upgrades before retrying |
 | Getting unstuck | In the campaign you can replay any wave you have already cleared to earn more currency for the shop |
 | Endless failure | One failed wave ends the run |
@@ -124,7 +124,7 @@ Waves average about 5 minutes. Early waves are shorter (around 3 minutes) and bo
 3. **Drums:** one or two moments where war drums sound in the distance, signalling the next push.
 4. **Climax:** a big threat at the end, such as a ram, a tank or a bomber run.
 
-**No dead air (Christopher's rule, Nov 18 2026):** as soon as the field is clear, the next group arrives right away, and the rest of the wave moves up by the same amount. You never wait in silence for the next enemy.
+**No dead air (Christopher's rule, Nov 18 2026):** as soon as the field is clear, the next group arrives right away, and the rest of the wave moves up by the same amount. You never wait in silence for the next enemy. Fast players finish waves sooner, and that's fine: early waves can be short. A wave's enemies are fixed, and a player never faces more enemies for killing quickly.
 
 A wave ends when every scheduled enemy has arrived and been killed.
 
