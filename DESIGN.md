@@ -88,7 +88,7 @@ The campaign has four eras of about 10 waves each, roughly 40 waves in total. Ea
 
 ### Era 1 — Medieval
 - **Fortress:** stone walls and a wooden gate.
-- **Your weapons:** crossbow; ballista (bought in the shop: slow reload, the bolt pierces every enemy in the lane for 3 damage each, and it reloads separately from the crossbow); boiling oil (bought in the shop: 2 to 4 pots per wave, splashes every enemy at the wall in your lane for 5 damage; a pot isn't used if nobody is at the wall there).
+- **Your weapons:** crossbow; ballista (bought in the shop: slow reload, the bolt pierces every enemy in the lane, doing 2 damage to the first and 1 to each enemy behind it (toned down Nov 18 2026 at Christopher's request, so it no longer one-shots everything), and it reloads separately from the crossbow); boiling oil (bought in the shop: 2 to 4 pots per wave, splashes every enemy at the wall in your lane for 5 damage; a pot isn't used if nobody is at the wall there).
 - **Enemies:**
   - Foot soldiers: marching steps. Weak and common.
   - Knights: clanking armor, slow, take several hits.

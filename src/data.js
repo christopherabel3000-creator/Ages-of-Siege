@@ -52,7 +52,7 @@ export const ENEMIES = {
     archerRange: 80, volleyInterval: 5, volleyDamage: 2,
     slamDamage: 20, boomInterval: 4, boomDamage: 6, gateBlocks: true,
     stepInterval: 1.6, pitch: 120,
-    intro: 'A siege tower! Archers on top will fire at the wall as it rolls in. Forty hits of damage to bring it down. The ballista hurts it most.',
+    intro: 'A siege tower! Archers on top will fire at the wall as it rolls in. Forty damage to bring it down.',
   },
 };
 
@@ -70,7 +70,7 @@ export const UPGRADES = [
   { id: 'scouts', name: 'Scouts', costs: [30],
     desc: 'Scouts call out what is coming and in which lane as each group comes into earshot.' },
   { id: 'ballista', name: 'Ballista', costs: [120],
-    desc: 'A second main weapon. Slow to reload, but its huge bolt pierces every enemy in the lane for three damage each. Fire it with B, or switch to it with a two-finger swipe up or down, then tap.' },
+    desc: 'A second main weapon. Slow to reload, but its huge bolt pierces every enemy in the lane. Two damage to the first enemy, one to each enemy behind it. Fire it with B, or switch to it with a two-finger swipe up or down, then tap.' },
   { id: 'crank', name: 'Ballista crank', costs: [80, 140], requires: 'ballista',
     desc: 'Reload the ballista faster. Two levels.' },
   { id: 'oil', name: 'Boiling oil', costs: [80, 100, 140],
@@ -92,7 +92,7 @@ export const BASE = {
   clearBonus: 30,
   clearBonusPerWave: 10,  // campaign: later waves pay a bigger clear bonus
   ballistaReload: [4.0, 3.0, 2.2],
-  ballistaDamage: 3,
+  ballistaDamage: [2, 1],  // first enemy in the lane, then everyone behind it
   ballistaSpeed: 60,
   oilDamage: 5,
   repairCostPerPoint: 1,

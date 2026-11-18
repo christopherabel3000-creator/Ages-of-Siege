@@ -164,8 +164,10 @@ export class Battle {
     // The bolt pierces: every enemy in the lane is hit as it passes.
     const inLane = this.enemies.filter(en => en.lane === this.aim && !en.dead && en.dist <= SPAWN_DIST + 15);
     if (!inLane.length) { this.pending.push({ at: this.time + 0.6, miss: true, lane: this.aim }); return; }
-    const dmg = BASE.ballistaDamage;
-    for (const en of inLane) {
+    // It loses power as it pierces: full damage to the first enemy, less to the rest.
+    inLane.sort((a, b) => a.dist - b.dist);
+    for (const [i, en] of inLane.entries()) {
+      const dmg = BASE.ballistaDamage[i === 0 ? 0 : 1];
       en.incoming += dmg;
       this.pending.push({ at: this.time + Math.max(0.05, en.dist / BASE.ballistaSpeed), target: en, damage: dmg, source: 'ballista' });
     }
