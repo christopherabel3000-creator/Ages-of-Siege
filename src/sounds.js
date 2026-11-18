@@ -190,6 +190,93 @@ export function reloadDone(e, dest, t) {
   noise(e, dest, t + 0.07, { freq: 2600, q: 6, dur: 0.025, gain: 0.4 });
 }
 
+export function ballistaFire(e, dest, t) {
+  // A massive wooden arm slamming forward, a deep twang, and a heavy whoosh.
+  noise(e, dest, t, { type: 'lowpass', freq: 900, dur: 0.12, gain: 1.0 });
+  tone(e, dest, t, { freq: 90, freqEnd: 45, dur: 0.3, gain: 0.8 });
+  tone(e, dest, t + 0.01, { type: 'sawtooth', freq: 110, freqEnd: 80, dur: 0.45, gain: 0.35, filter: { freq: 900 } });
+  noise(e, dest, t + 0.03, { freq: 1200, freqEnd: 250, q: 1.5, dur: 0.6, gain: 0.45 });
+}
+
+export function ballistaReady(e, dest, t) {
+  // Heavy wooden ratchet: three deep clacks, clearly different from the crossbow click.
+  for (const dt of [0, 0.11, 0.22]) {
+    noise(e, dest, t + dt, { freq: 700, q: 4, dur: 0.04, gain: 0.55 });
+    tone(e, dest, t + dt, { type: 'triangle', freq: 210, dur: 0.05, gain: 0.25 });
+  }
+}
+
+export function heavyDryClick(e, dest, t) {
+  tone(e, dest, t, { type: 'square', freq: 500, dur: 0.02, gain: 0.08 });
+}
+
+export function weaponSwitch(e, dest, t, toHeavy) {
+  // A rising clack for the ballista, a lighter one for the crossbow.
+  tone(e, dest, t, { type: 'triangle', freq: toHeavy ? 220 : 660, dur: 0.06, gain: 0.3 });
+  tone(e, dest, t + 0.07, { type: 'triangle', freq: toHeavy ? 165 : 880, dur: 0.08, gain: 0.3 });
+}
+
+export function oilPour(e, dest, t) {
+  // A cauldron tips, oil glugs and splashes, then sizzles.
+  tone(e, dest, t, { type: 'triangle', freq: 140, freqEnd: 90, dur: 0.25, gain: 0.3 });
+  for (let i = 0; i < 6; i++) {
+    noise(e, dest, t + 0.15 + i * 0.07, { freq: rand(300, 600), q: 6, dur: 0.06, gain: 0.5 });
+  }
+  noise(e, dest, t + 0.5, { type: 'lowpass', freq: 700, dur: 0.25, gain: 0.8 });
+  noise(e, dest, t + 0.55, { type: 'highpass', freq: 4500, dur: 1.4, gain: 0.35, attack: 0.05 });
+}
+
+export function oilEmpty(e, dest, t) {
+  tone(e, dest, t, { type: 'triangle', freq: 180, freqEnd: 150, dur: 0.15, gain: 0.25 });
+}
+
+export function towerCreakLoop(e, dest) {
+  // A huge wooden tower on wheels: deep rumble plus slow creaks, scheduled by the game.
+  return rumbleLoop(e, dest);
+}
+
+export function towerCreak(e, dest, t) {
+  noise(e, dest, t, { freq: rand(260, 380), q: 14, dur: 0.6, gain: 0.7, attack: 0.1 });
+  tone(e, dest, t, { type: 'sawtooth', freq: rand(70, 90), freqEnd: rand(60, 75), dur: 0.6, gain: 0.15, attack: 0.1, filter: { freq: 400 } });
+}
+
+export function volley(e, dest, t) {
+  // Several bowstrings at once from the tower.
+  for (let i = 0; i < 5; i++) {
+    const dt = rand(0, 0.15);
+    noise(e, dest, t + dt, { type: 'highpass', freq: 3000, dur: 0.01, gain: 0.3 });
+    tone(e, dest, t + dt, { type: 'triangle', freq: rand(280, 360), freqEnd: 240, dur: 0.1, gain: 0.12 });
+  }
+}
+
+export function arrowsIncoming(e, dest, t) {
+  // Whistling arrows passing overhead, then thudding into the wall around you.
+  noise(e, dest, t, { freq: 3500, freqEnd: 1200, q: 4, dur: 0.5, gain: 0.25, attack: 0.15 });
+  for (let i = 0; i < 5; i++) {
+    noise(e, dest, t + 0.55 + rand(0, 0.25), { freq: rand(1200, 2000), q: 3, dur: 0.03, gain: 0.45 });
+  }
+}
+
+export function gangwaySlam(e, dest, t) {
+  tone(e, dest, t, { freq: 55, freqEnd: 30, dur: 1.0, gain: 1.4 });
+  noise(e, dest, t, { type: 'lowpass', freq: 500, dur: 0.6, gain: 1.0 });
+  overTheWall(e, dest, t + 0.3);
+}
+
+export function bowShot(e, dest, t) {
+  // An enemy longbow: a taut twang and a creak of the bow.
+  noise(e, dest, t - 0.25 > 0 ? t - 0.25 : t, { freq: 900, q: 10, dur: 0.2, gain: 0.25, attack: 0.1 });
+  tone(e, dest, t, { type: 'sawtooth', freq: 260, freqEnd: 200, dur: 0.18, gain: 0.3, filter: { freq: 1800 } });
+  noise(e, dest, t, { type: 'highpass', freq: 3000, dur: 0.015, gain: 0.5 });
+}
+
+export function arrowThunk(e, dest, t) {
+  // An arrow striking the stone just below you.
+  noise(e, dest, t - 0.2, { freq: 3000, freqEnd: 1500, q: 4, dur: 0.18, gain: 0.15, attack: 0.05 });
+  noise(e, dest, t, { freq: 1600, q: 3, dur: 0.04, gain: 0.6 });
+  tone(e, dest, t, { type: 'triangle', freq: 900, freqEnd: 600, dur: 0.06, gain: 0.15 });
+}
+
 export function archerShot(e, dest, t) {
   noise(e, dest, t, { type: 'highpass', freq: 3000, dur: 0.012, gain: 0.4 });
   tone(e, dest, t, { type: 'triangle', freq: 320, freqEnd: 260, dur: 0.12, gain: 0.25 });

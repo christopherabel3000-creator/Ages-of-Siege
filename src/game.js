@@ -27,6 +27,11 @@ export class Battle {
     this.damage = (this.up.bolts || 0) ? 2 : 1;
     this.reload = BASE.reload[this.up.winch || 0];
     this.archers = this.up.tower || 0;
+    this.hasBallista = !!this.up.ballista;
+    this.ballistaReload = BASE.ballistaReload[this.up.crank || 0];
+    this.ballistaUntil = 0;
+    this.weapon = 'crossbow';
+    this.oilLeft = this.up.oil ? 1 + this.up.oil : 0;
 
     this.aim = 2;
     this.time = 0;
@@ -59,6 +64,15 @@ export class Battle {
     if (!this.introduced.ready) {
       msg += ' Tap, or press F, to begin.';
       this.onIntroduce('ready');
+    }
+    // New gear is explained once, the first battle you have it.
+    if (this.hasBallista && !this.introduced.ballista) {
+      msg += ' Ballista mounted. Press B to fire it, or switch to it with a two-finger swipe up or down, then tap.';
+      this.onIntroduce('ballista');
+    }
+    if (this.oilLeft && !this.introduced.oil) {
+      msg += ` Boiling oil ready, ${this.oilLeft} pots. Press O, or hold one finger still, to pour it on the enemies at the wall in your lane.`;
+      this.onIntroduce('oil');
     }
     this.speaker.say(msg, { urgent: true });
     this._hud(true);
@@ -117,13 +131,68 @@ export class Battle {
     if (a === 'repeat') { this.speaker.repeat(); return; }
     if (a === 'status') { this.speaker.say(this.statusText(), { urgent: true }); return; }
     if (this.state === 'ready') {
-      if (a === 'fire') { this.speaker.stop(); this.begin(); }
+      if (a === 'fire' || a === 'fireCrossbow' || a === 'fireBallista') { this.speaker.stop(); this.begin(); }
       return;
     }
     if (a === 'aimLeft') this.setAim(this.aim - 1);
     else if (a === 'aimRight') this.setAim(this.aim + 1);
     else if (a.startsWith('lane')) this.setAim(Number(a.slice(4)));
-    else if (a === 'fire') this.fire();
+    else if (a === 'fire') this.weapon === 'ballista' ? this.fireBallista() : this.fire();
+    else if (a === 'fireCrossbow') this.fire();
+    else if (a === 'fireBallista') this.fireBallista();
+    else if (a === 'switchWeapon') this.switchWeapon();
+    else if (a === 'oil') this.pourOil();
+  }
+
+  switchWeapon() {
+    const t = this.e.now + 0.005;
+    if (!this.hasBallista) { this.speaker.say('Crossbow only.', { urgent: true, remember: false }); return; }
+    this.weapon = this.weapon === 'crossbow' ? 'ballista' : 'crossbow';
+    S.weaponSwitch(this.e, this.near, t, this.weapon === 'ballista');
+    this.speaker.say(this.weapon === 'ballista' ? 'Ballista.' : 'Crossbow.', { urgent: true, remember: false });
+    this._hud(true);
+  }
+
+  fireBallista() {
+    const e = this.e;
+    const t = e.now + 0.005;
+    if (!this.hasBallista) { S.heavyDryClick(e, this.near, t); return; }
+    if (this.time < this.ballistaUntil) { S.heavyDryClick(e, this.near, t); return; }
+    S.ballistaFire(e, this.near, t);
+    this.ballistaUntil = this.time + this.ballistaReload;
+    S.ballistaReady(e, this.near, t + this.ballistaReload);
+    // The bolt pierces: every enemy in the lane is hit as it passes.
+    const inLane = this.enemies.filter(en => en.lane === this.aim && !en.dead && en.dist <= SPAWN_DIST + 15);
+    if (!inLane.length) { this.pending.push({ at: this.time + 0.6, miss: true, lane: this.aim }); return; }
+    const dmg = BASE.ballistaDamage;
+    for (const en of inLane) {
+      en.incoming += dmg;
+      this.pending.push({ at: this.time + Math.max(0.05, en.dist / BASE.ballistaSpeed), target: en, damage: dmg, source: 'ballista' });
+    }
+  }
+
+  pourOil() {
+    const e = this.e;
+    const t = e.now + 0.005;
+    if (this.oilLeft <= 0) {
+      S.oilEmpty(e, this.near, t);
+      this.speaker.say(this.up.oil ? 'No oil left.' : 'No boiling oil. Buy it in the shop.', { urgent: true, remember: false });
+      return;
+    }
+    const below = this.enemies.filter(en => en.lane === this.aim && !en.dead && en.dist <= 0.5);
+    if (!below.length) {
+      // Nothing at the wall here: don't waste a pot.
+      S.oilEmpty(e, this.laneVoices[this.aim].input, t);
+      this.speaker.say(`Nobody at the wall ${LANES[this.aim].name}.`, { urgent: true, remember: false });
+      return;
+    }
+    this.oilLeft--;
+    S.oilPour(e, this.laneVoices[this.aim].input, t);
+    for (const en of below) this.pending.push({ at: this.time + 0.55, target: en, damage: BASE.oilDamage, source: 'oil' });
+    setTimeout(() => {
+      if (this.state === 'over') return;
+      this.speaker.say(this.oilLeft ? `${this.oilLeft} ${this.oilLeft === 1 ? 'pot' : 'pots'} left.` : 'Last pot used.', { remember: false });
+    }, 1300);
   }
 
   setAim(lane) {
@@ -256,7 +325,10 @@ export class Battle {
       e.disposeVoice(hv, 3);
     }
     this.firstGroup = false;
-    for (let i = 0; i < ev.count; i++) this._spawn(ev.type, lane, SPAWN_DIST + i * 5 + Math.random() * 2);
+    // Later waves send bigger groups (rams and towers stay single).
+    const count = def.boss || ev.type === 'ram' ? ev.count : Math.max(1, Math.round(ev.count * (this.wave.crowd || 1)));
+    ev.count = count;
+    for (let i = 0; i < count; i++) this._spawn(ev.type, lane, SPAWN_DIST + i * 5 + Math.random() * 2);
 
     const laneName = LANES[lane].name;
     if (!this.introduced[ev.type]) {
@@ -274,12 +346,13 @@ export class Battle {
     const en = {
       type, def, lane, dist, hp: def.hp, incoming: 0, dead: false,
       state: 'advancing', voice,
-      speed: def.speed * this.diff.speed * (0.92 + Math.random() * 0.16),
+      speed: def.speed * this.diff.speed * (this.wave.pace || 1) * (0.92 + Math.random() * 0.16),
       pitch: def.pitch * (0.9 + Math.random() * 0.2),
       nextSound: this.time + Math.random() * def.stepInterval,
       stepCount: 0, timer: 0,
     };
-    if (type === 'ram') en.stopRumble = S.rumbleLoop(this.e, voice.input);
+    if (type === 'ram' || type === 'siegeTower') en.stopRumble = S.rumbleLoop(this.e, voice.input);
+    if (type === 'siegeTower') en.nextVolley = this.time + 6;
     this.enemies.push(en);
   }
 
@@ -297,7 +370,15 @@ export class Battle {
         else if (en.type === 'knight') { S.footstep(e, dest, at, true); if (en.stepCount % 2 === 0) S.clank(e, dest, at + 0.02); }
         else if (en.type === 'ladder') { S.runStep(e, dest, at); if (en.stepCount % 2 === 0) S.woodRattle(e, dest, at + 0.03); }
         else if (en.type === 'ram') S.heave(e, dest, at);
+        else if (en.type === 'siegeTower') S.towerCreak(e, dest, at);
+        else if (en.type === 'archer') S.runStep(e, dest, at);
         en.nextSound = now + def.stepInterval * (0.9 + Math.random() * 0.2) / this.diff.speed;
+      }
+      if (en.type === 'siegeTower') this._towerVolley(en, now, at);
+      if (def.standoff && en.dist <= def.standoff) {
+        en.state = 'shooting';
+        en.nextSound = now + 1 + Math.random() * 1.5;
+        return;
       }
       if (en.dist <= 0) this._arrive(en, now, at);
       return;
@@ -305,7 +386,11 @@ export class Battle {
 
     if (en.state === 'atWall') {
       if (now >= en.nextSound) {
-        if (en.type === 'ram') {
+        if (en.type === 'siegeTower') {
+          S.overTheWall(e, dest, at);
+          this._damageWall(def.boomDamage * this._gateFactor(def), at + 0.2);
+          en.nextSound = now + def.boomInterval;
+        } else if (en.type === 'ram') {
           S.heave(e, dest, at);
           S.ramBoom(e, dest, at + 0.35);
           this._damageWall(def.boomDamage * this._gateFactor(def), at + 0.35);
@@ -315,6 +400,16 @@ export class Battle {
           this._damageWall(def.wallDamage, at);
           en.nextSound = now + def.hackInterval * (0.85 + Math.random() * 0.3);
         }
+      }
+      return;
+    }
+
+    if (en.state === 'shooting') {
+      if (now >= en.nextSound) {
+        S.bowShot(e, dest, at);
+        S.arrowThunk(e, this.near, at + 0.9, LANES[en.lane].angle);
+        this._damageWall(def.shotDamage, at + 0.9);
+        en.nextSound = now + def.shotInterval * (0.85 + Math.random() * 0.3);
       }
       return;
     }
@@ -339,7 +434,13 @@ export class Battle {
     const e = this.e;
     en.dist = 0;
     e.placeVoice(en.voice, en.voice.angle, 0);
-    if (en.type === 'ladder') {
+    if (en.type === 'siegeTower') {
+      en.state = 'atWall';
+      S.gangwaySlam(e, en.voice.input, at);
+      this._damageWall(en.def.slamDamage * this._gateFactor(en.def), at + 0.1);
+      en.nextSound = now + en.def.boomInterval;
+      this.speaker.say('The siege tower is at the wall!', { urgent: true });
+    } else if (en.type === 'ladder') {
       en.state = 'climbing';
       en.timer = en.def.climbTime;
       S.ladderSlam(e, en.voice.input, at);
@@ -348,6 +449,15 @@ export class Battle {
       en.state = 'atWall';
       en.nextSound = now + (en.type === 'ram' ? 0.8 : 0.3 + Math.random() * 0.5);
     }
+  }
+
+  _towerVolley(en, now, at) {
+    const def = en.def;
+    if (en.dist > def.archerRange || now < en.nextVolley) return;
+    en.nextVolley = now + def.volleyInterval;
+    S.volley(this.e, en.voice.input, at);
+    S.arrowsIncoming(this.e, this.near, at + 0.4);
+    this._damageWall(def.volleyDamage, at + 0.95);
   }
 
   _gateFactor(def) { return def.gateBlocks && this.up.gate ? 0.6 : 1; }
@@ -363,6 +473,7 @@ export class Battle {
     const en = p.target;
     en.incoming = Math.max(0, en.incoming - p.damage);
     if (en.dead) {
+      if (p.source === 'oil') return;
       // Already down: the bolt flies past into the dirt.
       const v = e.createVoice(LANES[en.lane].angle, en.dist + 10);
       S.missThunk(e, v.input, at);
@@ -390,7 +501,8 @@ export class Battle {
     }
     // Clear confirmation cue, panned toward the lane of the kill.
     const cue = e.createNear(LANES[en.lane].angle / 75, 1);
-    S.killConfirm(e, cue, at + 0.12, en.type === 'ram');
+    S.killConfirm(e, cue, at + 0.12, en.def.wooden);
+    if (en.def.boss) setTimeout(() => this.state !== 'over' && this.speaker.say('The siege tower is down!', { urgent: true }), 700);
     setTimeout(() => { try { cue.disconnect(); } catch (err) { /* gone */ } }, 1500);
     this.kills++;
     this.goldEarned += en.def.gold;
@@ -438,12 +550,17 @@ export class Battle {
     for (const en of this.enemies) if (!en.dead) counts[en.lane]++;
     const parts = counts.map((c, i) => c ? `${c} ${LANES[i].name}` : null).filter(Boolean);
     const enemies = parts.length ? `Enemies: ${parts.join(', ')}.` : 'No enemies on the field.';
-    return `Wall ${pct} percent. Aiming ${LANES[this.aim].name}. ${enemies}`;
+    let gear = '';
+    if (this.hasBallista) gear += ` ${this.weapon === 'ballista' ? 'Ballista' : 'Crossbow'} selected.`;
+    if (this.up.oil) gear += ` ${this.oilLeft} oil.`;
+    return `Wall ${pct} percent. Aiming ${LANES[this.aim].name}.${gear} ${enemies}`;
   }
 
   _hud(force) {
     this.onHud({
       lane: LANES[this.aim].name,
+      weapon: this.weapon,
+      oil: this.up.oil ? this.oilLeft : null,
       wall: Math.round(100 * this.hp / this.maxHP),
       enemies: this.enemies.filter(en => !en.dead).length,
       kills: this.kills,

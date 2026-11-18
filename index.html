@@ -20,14 +20,14 @@
         <button type="button" data-go="howto">How to play</button>
         <button type="button" data-go="settings">Settings</button>
       </div>
-      <p class="small">Prototype: medieval era, waves 1 to 3.</p>
+      <p class="small">Prototype: the medieval era, waves 1 to 10.</p>
     </section>
 
     <section id="screen-campaign" class="screen" hidden>
       <h2 tabindex="-1">Campaign</h2>
       <p id="campaign-gold"></p>
       <ul id="campaign-waves" class="list"></ul>
-      <p id="campaign-done" hidden>You have cleared every wave in this prototype. More waves are coming.</p>
+      <p id="campaign-done" hidden>You have conquered the medieval era. The gunpowder era is coming next.</p>
       <div class="menu">
         <button type="button" id="campaign-shop">Shop</button>
         <button type="button" data-go="title">Back</button>
@@ -66,7 +66,9 @@
       <h3>Phone</h3>
       <ul>
         <li>Swipe left or right: aim one lane over. A tick plays in that lane, higher in pitch toward the right.</li>
-        <li>Tap: fire.</li>
+        <li>Tap: fire your main weapon.</li>
+        <li>Two-finger swipe up or down: switch between the crossbow and the ballista.</li>
+        <li>Hold one finger still for half a second: pour boiling oil.</li>
         <li>Swipe up: status report.</li>
         <li>Swipe down: repeat the last callout.</li>
         <li>Two-finger tap: pause or resume.</li>
@@ -76,7 +78,10 @@
       <ul>
         <li>Left and right arrows: aim one lane over.</li>
         <li>1 to 5: jump straight to a lane, from far left to far right.</li>
-        <li>F or Space: fire.</li>
+        <li>F: fire the crossbow.</li>
+        <li>B: fire the ballista.</li>
+        <li>Space: fire whichever main weapon is selected.</li>
+        <li>O: pour boiling oil.</li>
         <li>S: status report.</li>
         <li>R: repeat the last callout.</li>
         <li>Escape or P: pause or resume.</li>
@@ -88,6 +93,13 @@
         <li>Knights: heavy steps and clanking armor. Three bolts each.</li>
         <li>Ladder crews: quick running steps and rattling wood. When the ladder slams against the wall, shoot them before they climb over.</li>
         <li>Battering ram: a deep rumble and a chanting crew, always aimed at the gate in the center. It booms against the gate for heavy damage.</li>
+        <li>Siege tower: a huge creaking tower on wheels. Archers on top fire volleys at the wall while it rolls in, and if it reaches the wall it drops a gangway and soldiers pour over.</li>
+      </ul>
+      <h3>Weapons</h3>
+      <ul>
+        <li>Crossbow: quick to reload, hits the closest enemy in your lane.</li>
+        <li>Ballista: bought in the shop. Slow to reload, but its bolt pierces every enemy in the lane for heavy damage. You can fire it while the crossbow reloads, and the other way around. Three deep clacks mean it is ready.</li>
+        <li>Boiling oil: bought in the shop. Pours on every enemy at the wall in your lane. It refills each wave. If nobody is at the wall in that lane, the pot is not used.</li>
       </ul>
       <h3>Gold and repairs</h3>
       <p>You earn gold for every kill and a bonus for clearing a wave. After each wave, repairs to the wall are paid automatically out of your gold, so the wall always starts the next wave at full strength. The less damage you take, the more you have to spend.</p>

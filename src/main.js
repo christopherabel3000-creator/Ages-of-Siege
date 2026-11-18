@@ -124,7 +124,7 @@ function campaignResult(i, r) {
   }
   const replay = i < save.cleared;
   const rate = replay ? BASE.replayRate : 1;
-  const earned = Math.round((r.gold + BASE.clearBonus) * rate);
+  const earned = Math.round((r.gold + BASE.clearBonus + BASE.clearBonusPerWave * i) * rate);
   const repairCost = Math.round(r.damageTaken * BASE.repairCostPerPoint);
   const total = save.gold + earned;
   const repairs = Math.min(repairCost, total);
@@ -208,6 +208,7 @@ function renderShop(focusId) {
   const box = $('shop-items');
   box.innerHTML = '';
   for (const u of UPGRADES) {
+    if (u.requires && !target.upgrades[u.requires]) continue;
     const level = target.upgrades[u.id] || 0;
     const max = u.costs.length;
     const div = el('div', { class: 'item' });
@@ -288,7 +289,7 @@ async function beginBattle(opts) {
     onHud: (h) => {
       const text = h.state === 'ready'
         ? 'Ready. Tap or press F to begin.'
-        : `Aiming ${h.lane}. Wall ${h.wall} percent. Enemies on the field: ${h.enemies}.`;
+        : `Aiming ${h.lane}${h.weapon === 'ballista' ? ' with the ballista' : ''}. Wall ${h.wall} percent. Enemies on the field: ${h.enemies}.${h.oil !== null ? ` Oil: ${h.oil}.` : ''}`;
       if (text !== hudLast) { hudLast = text; $('hud-line').textContent = text; }
     },
     onPauseChange: (paused) => {
@@ -371,6 +372,6 @@ $('reset-progress').addEventListener('click', () => {
 });
 
 // Exposed for automated testing only.
-window.__ages = { save, get battle() { return battle; }, startCampaign, show };
+window.__ages = { UPGRADES, save, get battle() { return battle; }, startCampaign, show };
 
 show('title');

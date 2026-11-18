@@ -1,9 +1,11 @@
 // Gestures and keyboard, mapped to the same game actions.
-// Actions: aimLeft, aimRight, lane0..lane4, fire, status, repeat, pause
+// Actions: aimLeft, aimRight, lane0..lane4, fire (selected main weapon), fireCrossbow,
+// fireBallista, switchWeapon, oil, status, repeat, pause
 
 const SWIPE_MIN = 35;   // pixels
 const TAP_MAX_MOVE = 18;
 const TAP_MAX_TIME = 450; // ms
+const HOLD_TIME = 500;    // ms: hold one finger still to pour oil
 
 export class Input {
   constructor(surface, onAction) {
@@ -39,12 +41,15 @@ export class Input {
     if (k === 'ArrowLeft') action = 'aimLeft';
     else if (k === 'ArrowRight') action = 'aimRight';
     else if (k >= '1' && k <= '5') action = 'lane' + (Number(k) - 1);
-    else if (k === 'f' || k === 'F' || k === ' ') action = e.repeat ? null : 'fire';
+    else if (k === 'f' || k === 'F') action = e.repeat ? null : 'fireCrossbow';
+    else if (k === ' ') action = e.repeat ? null : 'fire';
+    else if (k === 'b' || k === 'B') action = e.repeat ? null : 'fireBallista';
+    else if (k === 'o' || k === 'O') action = e.repeat ? null : 'oil';
     else if (k === 's' || k === 'S') action = e.repeat ? null : 'status';
     else if (k === 'r' || k === 'R') action = e.repeat ? null : 'repeat';
     else if (k === 'Escape' || k === 'p' || k === 'P') action = e.repeat ? null : 'pause';
     else if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); return; }
-    if (k === 'f' || k === 'F' || k === ' ' || k === 'ArrowLeft' || k === 'ArrowRight') e.preventDefault();
+    if ('fFbBoO '.includes(k) || k === 'ArrowLeft' || k === 'ArrowRight') e.preventDefault();
     if (action) { e.preventDefault(); this._emit(action); }
   }
 
@@ -84,9 +89,11 @@ export class Input {
 
     if (s.maxFingers >= 2) {
       if (dist < 60) this._emit('pause');
+      else if (Math.abs(dy) > Math.abs(dx)) this._emit('switchWeapon');
       return;
     }
     if (dist <= TAP_MAX_MOVE && dt <= TAP_MAX_TIME) { this._emit('fire'); return; }
+    if (dist <= TAP_MAX_MOVE * 1.5 && dt >= HOLD_TIME) { this._emit('oil'); return; }
     if (dist >= SWIPE_MIN) {
       if (Math.abs(dx) > Math.abs(dy)) this._emit(dx < 0 ? 'aimLeft' : 'aimRight');
       else this._emit(dy < 0 ? 'status' : 'repeat');

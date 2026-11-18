@@ -61,12 +61,16 @@ One set of game actions, each tied to a gesture and a key. Both run through the 
 | Aim one lane left | Swipe left | Left arrow |
 | Aim one lane right | Swipe right | Right arrow |
 | Jump straight to a lane | — | 1 to 5 |
-| Fire | Tap | F or Space |
+| Fire the selected main weapon | Tap | Space |
+| Fire the crossbow | — | F |
+| Fire the ballista | — | B |
+| Switch main weapon (crossbow / ballista) | Two-finger swipe up or down | — |
+| Pour boiling oil | Hold one finger still (half a second) | O |
 | Status report | Swipe up | S |
 | Repeat last callout | Swipe down | R |
 | Pause / resume | Two-finger tap | Escape or P |
 
-Later weapons may add: hold to charge a heavy shot, and a weapon switch.
+Weapon controls were chosen by Christopher (Nov 18 2026): O pours oil, B fires the ballista, and a two-finger swipe up or down switches the main weapon on the phone. The phone's oil gesture (hold one finger still) was added to complete the set.
 
 ### Screen readers
 - **Menus, shop and reports** are normal HTML with headings and buttons, fully usable with VoiceOver and JAWS.
@@ -84,13 +88,14 @@ The campaign has four eras of about 10 waves each, roughly 40 waves in total. Ea
 
 ### Era 1 — Medieval
 - **Fortress:** stone walls and a wooden gate.
-- **Your weapons:** crossbow, then ballista (heavy, slow, pierces), boiling oil (poured on enemies at the wall).
+- **Your weapons:** crossbow; ballista (bought in the shop: slow reload, the bolt pierces every enemy in the lane for 3 damage each, and it reloads separately from the crossbow); boiling oil (bought in the shop: 2 to 4 pots per wave, splashes every enemy at the wall in your lane for 5 damage; a pot isn't used if nobody is at the wall there).
 - **Enemies:**
   - Foot soldiers: marching steps. Weak and common.
   - Knights: clanking armor, slow, take several hits.
   - Ladder crews: running steps and rattling wood. When a ladder hits the wall you have a few seconds to shoot the climbers before they get over and do heavy damage.
   - Battering ram: rumbling wheels and a chanting crew. At the gate it booms every few seconds for big damage.
-  - Siege tower (boss): a huge creaking tower on wheels.
+  - Archers (from wave 6): stop about 55 meters out and shoot the wall every few seconds until you hunt them down.
+  - Siege tower (boss, wave 10): a huge creaking tower on wheels. Archers on top fire volleys at the wall once it is in range; at the wall it drops a gangway for heavy damage and keeps attacking until destroyed. 40 hit points.
 - **Soundscape:** wind over open fields, crows, distant war drums.
 
 ### Era 2 — Gunpowder
@@ -142,6 +147,9 @@ The goal is a balance of movement and strategy that never becomes overwhelming. 
 
 ---
 
+### Difficulty ramp (built Nov 18 2026)
+Waves 1 to 3 stay easy on purpose (Christopher: doable at first, then ramping up). From wave 4, each wave has a **pace** (enemy speed multiplier, 1.15 at wave 4 rising to 2.0 at wave 10) and a **crowd** (group size multiplier, 1.0 at wave 4 rising to 1.8 at wave 10). Archers arrive from wave 6. Tuned with test bots of different speeds: a quick player clears every wave, and a slow player takes heavy damage in waves 9 and 10. To be retuned from Christopher's playtests.
+
 ## 7. Economy, repairs and the shop
 
 - Gold is earned for each kill, plus a bonus for clearing a wave.
@@ -155,6 +163,8 @@ The goal is a balance of movement and strategy that never becomes overwhelming. 
 - **Weapons:** stronger ammunition, faster reload, new weapons as the era allows.
 - **Defenses:** archer towers that fire on their own (you hear them shooting), boiling oil, trap pits, fire moats.
 - **Bonuses:** scouts who call out where each group is coming from, more gold per kill.
+- **Medieval shop (built):** steel bolts, faster winch (2 levels), thicker walls (3), reinforced gate, archer tower (2), scouts, ballista, ballista crank (2), boiling oil (3).
+- Campaign clear bonus grows by 10 gold per wave.
 
 ---
 
@@ -203,7 +213,7 @@ The goal is a balance of movement and strategy that never becomes overwhelming. 
 ## 11. Milestones
 
 1. **Medieval prototype** — lanes, 3D sound, gestures and keyboard, crossbow, foot soldiers, knights, ladder crews, battering ram, first three campaign waves, shop, repairs, replays, a basic endless mode, settings. *(Built Nov 17 2026.)*
-2. **Full medieval era** — 10 waves, ballista, boiling oil, archer tower levels, siege tower boss, tuning from playtests.
+2. **Full medieval era** — 10 waves, ballista, boiling oil, archers, siege tower boss, difficulty ramp. *(Built Nov 18 2026; tuning from playtests ongoing.)*
 3. **Gunpowder era**
 4. **Industrial era**
 5. **Modern era**
