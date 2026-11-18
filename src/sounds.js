@@ -196,6 +196,17 @@ export function archerShot(e, dest, t) {
   noise(e, dest, t + 0.01, { freq: 3000, freqEnd: 900, q: 3, dur: 0.25, gain: 0.15 });
 }
 
+// A bright, clean two-note chime that means "kill confirmed". Nothing else in the
+// game sounds like it. Big kills (the ram) get a third, higher note.
+export function killConfirm(e, dest, t, big = false) {
+  const notes = big ? [1047, 1319, 1760] : [1319, 1760];
+  notes.forEach((f, i) => {
+    const at = t + i * 0.085;
+    tone(e, dest, at, { type: 'sine', freq: f, dur: 0.35, gain: 0.32 });
+    tone(e, dest, at, { type: 'sine', freq: f * 2, dur: 0.15, gain: 0.08 });
+  });
+}
+
 // ---------- Aim and interface ----------
 
 const LANE_FREQS = [392, 494, 587, 698, 880];

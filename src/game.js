@@ -33,7 +33,7 @@ export class Battle {
     this.state = 'ready'; // ready, running, paused, over
     this.enemies = [];
     this.pending = [];   // bolts in flight
-    this.events = this.wave.events.slice().sort((a, b) => a.t - b.t);
+    this.events = this.wave.events.map(ev => ({ ...ev })).sort((a, b) => a.t - b.t);
     this.nextEvent = 0;
     this.drumsUntil = -1; this.nextDrum = 0;
     this.reloadUntil = 0;
@@ -217,6 +217,9 @@ export class Battle {
     }
     this.enemies = this.enemies.filter(en => !en.dead);
 
+    // No waiting around: once the field is clear, the next group arrives right away.
+    if (this.enemies.length === 0) this._pullNextGroupForward(now);
+
     // Wave cleared?
     if (!this.ended && this.nextEvent >= this.events.length && this.enemies.length === 0 && this.pending.length === 0) {
       this.ended = true;
@@ -225,6 +228,16 @@ export class Battle {
 
     this.hudTimer -= dt;
     if (this.hudTimer <= 0) { this.hudTimer = 0.25; this._hud(); }
+  }
+
+  _pullNextGroupForward(now) {
+    let i = this.nextEvent;
+    while (i < this.events.length && this.events[i].drums) i++;
+    if (i >= this.events.length) return;
+    const shift = this.events[i].t - (now + 0.4);
+    if (shift <= 0) return;
+    // Move the rest of the wave earlier by the same amount, so its rhythm stays the same.
+    for (let j = this.nextEvent; j < this.events.length; j++) this.events[j].t -= shift;
   }
 
   _runEvent(ev) {
@@ -375,6 +388,10 @@ export class Battle {
       if (en.def.armored) S.hitArmor(e, dest, at); else S.hitFlesh(e, dest, at);
       S.deathCry(e, dest, at + 0.03, en.pitch);
     }
+    // Clear confirmation cue, panned toward the lane of the kill.
+    const cue = e.createNear(LANES[en.lane].angle / 75, 1);
+    S.killConfirm(e, cue, at + 0.12, en.type === 'ram');
+    setTimeout(() => { try { cue.disconnect(); } catch (err) { /* gone */ } }, 1500);
     this.kills++;
     this.goldEarned += en.def.gold;
     this._silence(en);

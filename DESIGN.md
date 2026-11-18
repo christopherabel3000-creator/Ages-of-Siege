@@ -46,7 +46,7 @@ Your shot hits the **closest enemy in the lane you are aiming at**. Weapons have
 
 ### Feedback
 - Hit: an impact at the enemy's position (flesh thud or armor ring).
-- Kill: a cry and a fall.
+- Kill: a cry and a fall, plus a bright two-note chime that means "kill confirmed" (three notes for a ram), panned toward the lane of the kill. Nothing else in the game sounds like it.
 - Wall hit: stone thud, with cracking getting louder as the wall weakens. On the phone app, a vibration.
 - Status report on demand: wall strength, gold, and enemies on the field.
 
@@ -121,8 +121,10 @@ Waves average about 5 minutes. Early waves are shorter (around 3 minutes) and bo
 
 1. **Opening warning:** a horn from the direction the first group is coming from.
 2. **Build-up:** groups arrive with clear gaps between them.
-3. **Quiet moment:** one or two lulls where you hear the enemy regrouping in the distance, a chance to breathe and reload.
+3. **Drums:** one or two moments where war drums sound in the distance, signalling the next push.
 4. **Climax:** a big threat at the end, such as a ram, a tank or a bomber run.
+
+**No dead air (Christopher's rule, Nov 18 2026):** as soon as the field is clear, the next group arrives right away, and the rest of the wave moves up by the same amount. You never wait in silence for the next enemy.
 
 A wave ends when every scheduled enemy has arrived and been killed.
 
