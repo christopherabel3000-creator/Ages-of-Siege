@@ -1,6 +1,6 @@
 // Gestures and keyboard, mapped to the same game actions.
-// Actions: aimLeft, aimRight, lane0..lane4, fire (selected main weapon), fireCrossbow,
-// fireBallista, switchWeapon, oil, status, repeat, pause
+// Actions: aimLeft, aimRight, lane0..lane4, fire (selected main weapon), fireLight (F),
+// fireHeavy (B), fireMortar (M), switchWeapon, oil, status, repeat, pause
 
 const SWIPE_MIN = 35;   // pixels
 const TAP_MAX_MOVE = 18;
@@ -41,15 +41,16 @@ export class Input {
     if (k === 'ArrowLeft') action = 'aimLeft';
     else if (k === 'ArrowRight') action = 'aimRight';
     else if (k >= '1' && k <= '5') action = 'lane' + (Number(k) - 1);
-    else if (k === 'f' || k === 'F') action = e.repeat ? null : 'fireCrossbow';
+    else if (k === 'f' || k === 'F') action = e.repeat ? null : 'fireLight';
+    else if (k === 'm' || k === 'M') action = e.repeat ? null : 'fireMortar';
     else if (k === ' ') action = e.repeat ? null : 'fire';
-    else if (k === 'b' || k === 'B') action = e.repeat ? null : 'fireBallista';
+    else if (k === 'b' || k === 'B') action = e.repeat ? null : 'fireHeavy';
     else if (k === 'o' || k === 'O') action = e.repeat ? null : 'oil';
     else if (k === 's' || k === 'S') action = e.repeat ? null : 'status';
     else if (k === 'r' || k === 'R') action = e.repeat ? null : 'repeat';
     else if (k === 'Escape' || k === 'p' || k === 'P') action = e.repeat ? null : 'pause';
     else if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); return; }
-    if ('fFbBoO '.includes(k) || k === 'ArrowLeft' || k === 'ArrowRight') e.preventDefault();
+    if ('fFbBoOmM '.includes(k) || k === 'ArrowLeft' || k === 'ArrowRight') e.preventDefault();
     if (action) { e.preventDefault(); this._emit(action); }
   }
 
@@ -87,6 +88,10 @@ export class Input {
     const dist = Math.hypot(dx, dy);
     const dt = performance.now() - s.time;
 
+    if (s.maxFingers >= 3) {
+      if (dist < 80) this._emit('fireMortar');
+      return;
+    }
     if (s.maxFingers >= 2) {
       if (dist < 60) this._emit('pause');
       else if (Math.abs(dy) > Math.abs(dx)) this._emit('switchWeapon');

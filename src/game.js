@@ -1,7 +1,9 @@
 // One wave of battle: the game loop and the rules.
 
 import * as S from './sounds.js';
-import { LANES, ENEMIES, BASE, DIFFICULTY, SPAWN_DIST } from './data.js';
+import { LANES, ENEMIES, BASE, DIFFICULTY, SPAWN_DIST, WEAPONS } from './data.js';
+
+const SLOT_ORDER = ['light', 'heavy', 'mortar'];
 
 const TOWERS = [
   { angle: -80, dist: 7 },  // left tower
@@ -22,16 +24,27 @@ export class Battle {
     this.onHud = opts.onHud || (() => {});
     this.onPauseChange = opts.onPauseChange || (() => {});
 
-    this.maxHP = BASE.wallHP * (1 + 0.25 * (this.up.walls || 0));
+    this.era = opts.era || 0;
+    this.maxHP = BASE.wallHP * (1 + 0.25 * ((this.up.walls || 0) + (this.up.ramparts || 0)));
     this.hp = this.maxHP;
-    this.damage = (this.up.bolts || 0) ? 2 : 1;
-    this.reload = BASE.reload[this.up.winch || 0];
     this.archers = this.up.tower || 0;
-    this.hasBallista = !!this.up.ballista;
-    this.ballistaReload = BASE.ballistaReload[this.up.crank || 0];
-    this.ballistaUntil = 0;
-    this.weapon = 'crossbow';
     this.oilLeft = this.up.oil ? 1 + this.up.oil : 0;
+
+    // Weapons: the best one you own in each slot. Newer weapons replace older ones.
+    const up = this.up;
+    this.slots = { light: 'crossbow', heavy: null, mortar: null };
+    if (up.musket) this.slots.light = 'musket';
+    if (up.cannon) this.slots.heavy = 'cannon'; else if (up.ballista) this.slots.heavy = 'ballista';
+    if (up.mortar) this.slots.mortar = 'mortar';
+    this.reloads = {
+      crossbow: BASE.reload[up.winch || 0],
+      musket: WEAPONS.musket.reload[up.cartridges || 0],
+      ballista: BASE.ballistaReload[up.crank || 0],
+      cannon: WEAPONS.cannon.reload[up.drill || 0],
+      mortar: WEAPONS.mortar.reload[up.mortarCrew || 0],
+    };
+    this.until = { light: 0, heavy: 0, mortar: 0 };
+    this.selected = 'light';
 
     this.aim = 2;
     this.time = 0;
@@ -41,7 +54,6 @@ export class Battle {
     this.events = this.wave.events.map(ev => ({ ...ev })).sort((a, b) => a.t - b.t);
     this.nextEvent = 0;
     this.drumsUntil = -1; this.nextDrum = 0;
-    this.reloadUntil = 0;
     this.kills = 0;
     this.goldEarned = 0;
     this.warned50 = false; this.warned25 = false;
@@ -66,9 +78,14 @@ export class Battle {
       this.onIntroduce('ready');
     }
     // New gear is explained once, the first battle you have it.
-    if (this.hasBallista && !this.introduced.ballista) {
-      msg += ' Ballista mounted. Press B to fire it, or switch to it with a two-finger swipe up or down, then tap.';
-      this.onIntroduce('ballista');
+    const gearIntro = {
+      ballista: ' Ballista mounted. Press B to fire it, or switch to it with a two-finger swipe up or down, then tap.',
+      musket: ' Musket loaded. It replaces the crossbow on F and tap. Listen for the ramrod, then the hammer click: that means it is ready.',
+      cannon: ' Cannon in place. It replaces the ballista on B. The bell rings when the crew has reloaded.',
+      mortar: ' Mortar ready. Press M, or tap with three fingers. The shell lands where the closest enemy in your lane was standing, a couple of seconds later.',
+    };
+    for (const w of Object.values(this.slots)) {
+      if (w && gearIntro[w] && !this.introduced[w]) { msg += gearIntro[w]; this.onIntroduce(w); }
     }
     if (this.oilLeft && !this.introduced.oil) {
       msg += ` Boiling oil ready, ${this.oilLeft} pots. Press O, or hold one finger still, to pour it on the enemies at the wall in your lane.`;
@@ -131,46 +148,82 @@ export class Battle {
     if (a === 'repeat') { this.speaker.repeat(); return; }
     if (a === 'status') { this.speaker.say(this.statusText(), { urgent: true }); return; }
     if (this.state === 'ready') {
-      if (a === 'fire' || a === 'fireCrossbow' || a === 'fireBallista') { this.speaker.stop(); this.begin(); }
+      if (a.startsWith('fire')) { this.speaker.stop(); this.begin(); }
       return;
     }
     if (a === 'aimLeft') this.setAim(this.aim - 1);
     else if (a === 'aimRight') this.setAim(this.aim + 1);
     else if (a.startsWith('lane')) this.setAim(Number(a.slice(4)));
-    else if (a === 'fire') this.weapon === 'ballista' ? this.fireBallista() : this.fire();
-    else if (a === 'fireCrossbow') this.fire();
-    else if (a === 'fireBallista') this.fireBallista();
+    else if (a === 'fire') this.fireSlot(this.selected);
+    else if (a === 'fireLight') this.fireSlot('light');
+    else if (a === 'fireHeavy') this.fireSlot('heavy');
+    else if (a === 'fireMortar') this.fireSlot('mortar');
     else if (a === 'switchWeapon') this.switchWeapon();
     else if (a === 'oil') this.pourOil();
   }
 
+  ownedSlots() { return SLOT_ORDER.filter(sl => this.slots[sl]); }
+
   switchWeapon() {
     const t = this.e.now + 0.005;
-    if (!this.hasBallista) { this.speaker.say('Crossbow only.', { urgent: true, remember: false }); return; }
-    this.weapon = this.weapon === 'crossbow' ? 'ballista' : 'crossbow';
-    S.weaponSwitch(this.e, this.near, t, this.weapon === 'ballista');
-    this.speaker.say(this.weapon === 'ballista' ? 'Ballista.' : 'Crossbow.', { urgent: true, remember: false });
+    const owned = this.ownedSlots();
+    if (owned.length < 2) { this.speaker.say(`${WEAPONS[this.slots.light].name} only.`, { urgent: true, remember: false }); return; }
+    const i = owned.indexOf(this.selected);
+    this.selected = owned[(i + 1) % owned.length];
+    S.weaponSwitch(this.e, this.near, t, this.selected !== 'light');
+    this.speaker.say(`${WEAPONS[this.slots[this.selected]].name}.`, { urgent: true, remember: false });
     this._hud(true);
   }
 
-  fireBallista() {
+  fireSlot(slot) {
     const e = this.e;
     const t = e.now + 0.005;
-    if (!this.hasBallista) { S.heavyDryClick(e, this.near, t); return; }
-    if (this.time < this.ballistaUntil) { S.heavyDryClick(e, this.near, t); return; }
-    S.ballistaFire(e, this.near, t);
-    this.ballistaUntil = this.time + this.ballistaReload;
-    S.ballistaReady(e, this.near, t + this.ballistaReload);
-    // The bolt pierces: every enemy in the lane is hit as it passes.
-    const inLane = this.enemies.filter(en => en.lane === this.aim && !en.dead && en.dist <= SPAWN_DIST + 15);
-    if (!inLane.length) { this.pending.push({ at: this.time + 0.6, miss: true, lane: this.aim }); return; }
-    // It loses power as it pierces: full damage to the first enemy, less to the rest.
-    inLane.sort((a, b) => a.dist - b.dist);
-    for (const [i, en] of inLane.entries()) {
-      const dmg = BASE.ballistaDamage[i === 0 ? 0 : 1];
-      en.incoming += dmg;
-      this.pending.push({ at: this.time + Math.max(0.05, en.dist / BASE.ballistaSpeed), target: en, damage: dmg, source: 'ballista' });
+    const w = this.slots[slot];
+    if (!w) {
+      S.heavyDryClick(e, this.near, t);
+      if (slot === 'mortar') this.speaker.say('No mortar. Buy it in the shop.', { urgent: true, remember: false });
+      return;
     }
+    if (this.time < this.until[slot]) { (slot === 'light' ? S.dryClick : S.heavyDryClick)(e, this.near, t); return; }
+    const reload = this.reloads[w];
+    this.until[slot] = this.time + reload;
+    if (w === 'crossbow') { S.crossbowFire(e, this.near, t); S.reloadDone(e, this.near, t + reload); this._shootSingle(this.up.bolts ? 2 : 1, WEAPONS.crossbow.speed); }
+    else if (w === 'musket') { S.musketFire(e, this.near, t); S.musketReload(e, this.near, t + 0.3, reload - 0.3); this._shootSingle(WEAPONS.musket.damage, WEAPONS.musket.speed, 0.07); }
+    else if (w === 'ballista') { S.ballistaFire(e, this.near, t); S.ballistaReady(e, this.near, t + reload); this._shootLane(BASE.ballistaDamage, WEAPONS.ballista.speed, 'ballista'); }
+    else if (w === 'cannon') { S.cannonFire(e, this.near, t); S.cannonReady(e, this.near, t + reload); this._shootLane(WEAPONS.cannon.damage, WEAPONS.cannon.speed, 'cannon'); }
+    else if (w === 'mortar') { S.mortarFire(e, this.near, t); S.mortarReady(e, this.near, t + reload); this._shootMortar(); }
+  }
+
+  // Hits the closest enemy in the lane.
+  _shootSingle(damage, speed, delay = 0) {
+    const target = this._pickTarget(this.aim);
+    if (!target) { this.pending.push({ at: this.time + 0.45, miss: true, lane: this.aim }); return; }
+    target.incoming += damage;
+    this.pending.push({ at: this.time + delay + Math.max(0.05, target.dist / speed), target, damage, source: 'player' });
+  }
+
+  // Pierces (ballista) or bounces (cannon) down the lane, losing power with each enemy hit.
+  _shootLane(damages, speed, source) {
+    const inLane = this.enemies.filter(en => en.lane === this.aim && this._targetable(en));
+    if (!inLane.length) { this.pending.push({ at: this.time + 0.6, miss: true, lane: this.aim }); return; }
+    inLane.sort((a, b) => a.dist - b.dist);
+    const max = source === 'cannon' ? damages.length : inLane.length;
+    for (const [i, en] of inLane.slice(0, max).entries()) {
+      const dmg = damages[Math.min(i, damages.length - 1)];
+      en.incoming += dmg;
+      this.pending.push({ at: this.time + Math.max(0.05, en.dist / speed), target: en, damage: dmg, source, bounce: source === 'cannon' });
+    }
+  }
+
+  // Lands where the closest enemy in the lane was standing, and blasts everything near it.
+  _shootMortar() {
+    const w = WEAPONS.mortar;
+    const target = this._pickTarget(this.aim);
+    const point = target ? target.dist : 50;
+    const v = this.e.createVoice(LANES[this.aim].angle, point);
+    S.shellWhistle(this.e, v.input, this.e.now + w.flight - 1.2, 1.2);
+    this.e.disposeVoice(v, w.flight + 1);
+    this.pending.push({ at: this.time + w.flight, shell: true, lane: this.aim, point, damage: w.damage, radius: w.radius });
   }
 
   pourOil() {
@@ -205,33 +258,18 @@ export class Battle {
     this._hud(true);
   }
 
-  fire() {
-    const e = this.e;
-    const t = e.now + 0.005;
-    if (this.time < this.reloadUntil) { S.dryClick(e, this.near, t); return; }
-    S.crossbowFire(e, this.near, t);
-    this.reloadUntil = this.time + this.reload;
-    S.reloadDone(e, this.near, t + this.reload);
-    this._launch(this.aim, LANES[this.aim].angle, 'player');
-  }
-
-  _launch(lane, fromAngle, source) {
-    const target = this._pickTarget(lane);
-    if (!target) {
-      // Bolt lands in the dirt.
-      this.pending.push({ at: this.time + 0.45, miss: true, lane });
-      return;
-    }
-    target.incoming += this.damage;
-    const flight = Math.max(0.05, target.dist / BASE.boltSpeed);
-    this.pending.push({ at: this.time + flight, target, damage: this.damage, source });
-  }
-
   _pickTarget(lane) {
-    const inLane = this.enemies.filter(en => (lane === null || en.lane === lane) && !en.dead && en.dist <= SPAWN_DIST + 15);
+    const inLane = this.enemies.filter(en => (lane === null || en.lane === lane) && this._targetable(en));
     if (!inLane.length) return null;
     inLane.sort((a, b) => a.dist - b.dist);
     return inLane.find(en => en.hp - en.incoming > 0) || inLane[0];
+  }
+
+  // Sappers underground can't be hit until they are close enough to hear clearly.
+  _targetable(en) {
+    if (en.dead || en.dist > SPAWN_DIST + 15) return false;
+    if (en.def.underground && en.dist > en.def.hearRange) return false;
+    return true;
   }
 
   // ---------- Update ----------
@@ -323,12 +361,12 @@ export class Battle {
     const lane = ev.type === 'ram' ? 2 : ev.lane;
     if (ev.horn || this.firstGroup) {
       const hv = e.createVoice(LANES[lane].angle, 90);
-      S.horn(e, hv.input, at);
+      (this.era >= 1 ? S.bugle : S.horn)(e, hv.input, at);
       e.disposeVoice(hv, 3);
     }
     this.firstGroup = false;
     // Later waves send bigger groups (rams and towers stay single).
-    const count = def.boss || ev.type === 'ram' ? ev.count : Math.max(1, Math.round(ev.count * (this.wave.crowd || 1)));
+    const count = def.boss || def.single || ev.type === 'ram' ? ev.count : Math.max(1, Math.round(ev.count * (this.wave.crowd || 1)));
     ev.count = count;
     for (let i = 0; i < count; i++) this._spawn(ev.type, lane, SPAWN_DIST + i * 5 + Math.random() * 2);
 
@@ -353,7 +391,7 @@ export class Battle {
       nextSound: this.time + Math.random() * def.stepInterval,
       stepCount: 0, timer: 0,
     };
-    if (type === 'ram' || type === 'siegeTower') en.stopRumble = S.rumbleLoop(this.e, voice.input);
+    if (type === 'ram' || type === 'siegeTower' || type === 'siegeCannon' || type === 'greatGun') en.stopRumble = S.rumbleLoop(this.e, voice.input);
     if (type === 'siegeTower') en.nextVolley = this.time + 6;
     this.enemies.push(en);
   }
@@ -374,11 +412,16 @@ export class Battle {
         else if (en.type === 'ram') S.heave(e, dest, at);
         else if (en.type === 'siegeTower') S.towerCreak(e, dest, at);
         else if (en.type === 'archer') S.runStep(e, dest, at);
+        else if (en.type === 'infantry' || en.type === 'musketeers') S.infantryStep(e, dest, at, en.stepCount % 2 === 0);
+        else if (en.type === 'cavalry') S.gallop(e, dest, at);
+        else if (en.type === 'sapper') S.dig(e, dest, at);
+        else if (en.type === 'siegeCannon' || en.type === 'greatGun') S.towerCreak(e, dest, at);
         en.nextSound = now + def.stepInterval * (0.9 + Math.random() * 0.2) / this.diff.speed;
       }
       if (en.type === 'siegeTower') this._towerVolley(en, now, at);
       if (def.standoff && en.dist <= def.standoff) {
         en.state = 'shooting';
+        if (en.stopRumble) { en.stopRumble(); en.stopRumble = null; }
         en.nextSound = now + 1 + Math.random() * 1.5;
         return;
       }
@@ -398,7 +441,7 @@ export class Battle {
           this._damageWall(def.boomDamage * this._gateFactor(def), at + 0.35);
           en.nextSound = now + def.boomInterval;
         } else {
-          S.hack(e, dest, at);
+          (en.type === 'cavalry' ? S.sabre : S.hack)(e, dest, at);
           this._damageWall(def.wallDamage, at);
           en.nextSound = now + def.hackInterval * (0.85 + Math.random() * 0.3);
         }
@@ -408,9 +451,21 @@ export class Battle {
 
     if (en.state === 'shooting') {
       if (now >= en.nextSound) {
-        S.bowShot(e, dest, at);
-        S.arrowThunk(e, this.near, at + 0.9, LANES[en.lane].angle);
-        this._damageWall(def.shotDamage, at + 0.9);
+        if (def.shot === 'cannon' || def.shot === 'greatGun') {
+          const big = def.shot === 'greatGun';
+          S.cannonFar(e, dest, at, big);
+          S.incomingShot(e, this.near, at + 0.5, big);
+          this._damageWall(def.shotDamage, at + 1.12);
+        } else if (en.type === 'musketeers') {
+          // Each musketeer fires on their own timer.
+          S.enemyVolley(e, dest, at, 1);
+          S.ballImpacts(e, this.near, at + 0.35);
+          this._damageWall(def.shotDamage, at + 0.4);
+        } else {
+          S.bowShot(e, dest, at);
+          S.arrowThunk(e, this.near, at + 0.9, LANES[en.lane].angle);
+          this._damageWall(def.shotDamage, at + 0.9);
+        }
         en.nextSound = now + def.shotInterval * (0.85 + Math.random() * 0.3);
       }
       return;
@@ -442,6 +497,11 @@ export class Battle {
       this._damageWall(en.def.slamDamage * this._gateFactor(en.def), at + 0.1);
       en.nextSound = now + en.def.boomInterval;
       this.speaker.say('The siege tower is at the wall!', { urgent: true });
+    } else if (en.type === 'sapper') {
+      en.dead = true;
+      S.mineBlast(e, en.voice.input, at);
+      this._damageWall(en.def.mineDamage, at + 0.05);
+      this._silence(en);
     } else if (en.type === 'ladder') {
       en.state = 'climbing';
       en.timer = en.def.climbTime;
@@ -466,6 +526,14 @@ export class Battle {
 
   _resolve(p, at) {
     const e = this.e;
+    if (p.shell) {
+      const v = e.createVoice(LANES[p.lane].angle, p.point);
+      S.explosion(e, v.input, at);
+      e.disposeVoice(v, 2);
+      const hit = this.enemies.filter(en => en.lane === p.lane && this._targetable(en) && Math.abs(en.dist - p.point) <= p.radius);
+      for (const en of hit) this._resolve({ target: en, damage: p.damage, source: 'shell', silentMiss: true }, at + 0.02);
+      return;
+    }
     if (p.miss) {
       const v = e.createVoice(LANES[p.lane].angle, 35);
       S.missThunk(e, v.input, at);
@@ -473,9 +541,10 @@ export class Battle {
       return;
     }
     const en = p.target;
-    en.incoming = Math.max(0, en.incoming - p.damage);
+    if (p.source !== 'shell') en.incoming = Math.max(0, en.incoming - p.damage);
+    if (p.bounce) S.bounceThud(e, en.voice.input, at - 0.02);
     if (en.dead) {
-      if (p.source === 'oil') return;
+      if (p.source === 'oil' || p.silentMiss) return;
       // Already down: the bolt flies past into the dirt.
       const v = e.createVoice(LANES[en.lane].angle, en.dist + 10);
       S.missThunk(e, v.input, at);
@@ -497,6 +566,9 @@ export class Battle {
       S.hitWood(e, dest, at);
       S.ramBoom(e, dest, at + 0.05);
       S.overTheWall(e, dest, at + 0.1);
+    } else if (en.type === 'cavalry') {
+      S.hitFlesh(e, dest, at);
+      S.horseWhinny(e, dest, at + 0.03);
     } else {
       if (en.def.armored) S.hitArmor(e, dest, at); else S.hitFlesh(e, dest, at);
       S.deathCry(e, dest, at + 0.03, en.pitch);
@@ -504,7 +576,7 @@ export class Battle {
     // Clear confirmation cue, panned toward the lane of the kill.
     const cue = e.createNear(LANES[en.lane].angle / 75, 1);
     S.killConfirm(e, cue, at + 0.12, en.def.wooden);
-    if (en.def.boss) setTimeout(() => this.state !== 'over' && this.speaker.say('The siege tower is down!', { urgent: true }), 700);
+    if (en.def.boss) setTimeout(() => this.state !== 'over' && this.speaker.say(en.def.downText, { urgent: true }), 700);
     setTimeout(() => { try { cue.disconnect(); } catch (err) { /* gone */ } }, 1500);
     this.kills++;
     this.goldEarned += en.def.gold;
@@ -553,7 +625,7 @@ export class Battle {
     const parts = counts.map((c, i) => c ? `${c} ${LANES[i].name}` : null).filter(Boolean);
     const enemies = parts.length ? `Enemies: ${parts.join(', ')}.` : 'No enemies on the field.';
     let gear = '';
-    if (this.hasBallista) gear += ` ${this.weapon === 'ballista' ? 'Ballista' : 'Crossbow'} selected.`;
+    if (this.ownedSlots().length > 1) gear += ` ${WEAPONS[this.slots[this.selected]].name} selected.`;
     if (this.up.oil) gear += ` ${this.oilLeft} oil.`;
     // Enemy positions come first: that's what matters most mid-fight.
     return `${enemies} Wall ${pct} percent. Aiming ${LANES[this.aim].name}.${gear}`;
@@ -562,7 +634,7 @@ export class Battle {
   _hud(force) {
     this.onHud({
       lane: LANES[this.aim].name,
-      weapon: this.weapon,
+      weapon: this.ownedSlots().length > 1 ? WEAPONS[this.slots[this.selected]].name : null,
       oil: this.up.oil ? this.oilLeft : null,
       wall: Math.round(100 * this.hp / this.maxHP),
       enemies: this.enemies.filter(en => !en.dead).length,

@@ -404,3 +404,162 @@ export function buy(e, dest, t) {
   tone(e, dest, t, { freq: 1320, dur: 0.08, gain: 0.15 });
   tone(e, dest, t + 0.07, { freq: 1760, dur: 0.12, gain: 0.15 });
 }
+
+// =====================================================================
+// Gunpowder era
+// =====================================================================
+
+export function infantryStep(e, dest, t, jingle) {
+  footstep(e, dest, t);
+  if (jingle) {
+    // Canteen and cartridge box rattling.
+    noise(e, dest, t + 0.03, { freq: 2600, q: 6, dur: 0.03, gain: 0.25 });
+    noise(e, dest, t + 0.07, { freq: 3100, q: 6, dur: 0.025, gain: 0.2 });
+  }
+}
+
+export function gallop(e, dest, t) {
+  // Three-beat hoofbeats on hard ground.
+  for (const [dt, g] of [[0, 0.7], [0.07, 0.55], [0.14, 0.8]]) {
+    tone(e, dest, t + dt, { freq: 120, freqEnd: 60, dur: 0.06, gain: g * 0.6 });
+    noise(e, dest, t + dt, { freq: rand(700, 1100), q: 2, dur: 0.035, gain: g * 0.5 });
+  }
+}
+
+export function horseWhinny(e, dest, t) {
+  const ctx = e.ctx;
+  const o = ctx.createOscillator();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(700, t);
+  o.frequency.linearRampToValueAtTime(1100, t + 0.15);
+  o.frequency.exponentialRampToValueAtTime(450, t + 0.8);
+  const vib = ctx.createOscillator(); vib.frequency.value = 18;
+  const vg = ctx.createGain(); vg.gain.value = 60;
+  vib.connect(vg); vg.connect(o.frequency);
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 1.5;
+  const g = envGain(ctx, dest, t, { attack: 0.03, dur: 0.8, peak: 0.3 });
+  o.connect(f); f.connect(g);
+  o.start(t); vib.start(t); o.stop(t + 0.9); vib.stop(t + 0.9);
+  noise(e, dest, t + 0.7, { type: 'lowpass', freq: 250, dur: 0.35, gain: 1.0 });
+  tone(e, dest, t + 0.7, { freq: 60, freqEnd: 35, dur: 0.3, gain: 0.7 });
+}
+
+export function dig(e, dest, t) {
+  // Muffled shovel scraping underground.
+  noise(e, dest, t, { type: 'lowpass', freq: 500, dur: 0.18, gain: 0.35, attack: 0.04 });
+  noise(e, dest, t + 0.05, { freq: rand(1200, 1700), q: 3, dur: 0.12, gain: 0.08, attack: 0.03 });
+}
+
+export function mineBlast(e, dest, t) {
+  tone(e, dest, t, { freq: 45, freqEnd: 22, dur: 1.4, gain: 1.6 });
+  noise(e, dest, t, { type: 'lowpass', freq: 400, dur: 1.2, gain: 1.4 });
+  noise(e, dest, t + 0.1, { type: 'lowpass', freq: 1500, dur: 1.5, gain: 0.5, attack: 0.1 });
+}
+
+export function sabre(e, dest, t) {
+  noise(e, dest, t, { type: 'highpass', freq: 3500, dur: 0.04, gain: 0.4 });
+  tone(e, dest, t, { freq: rand(2800, 3300), dur: 0.15, gain: 0.06 });
+}
+
+// ----- Your gunpowder weapons -----
+
+function gunshot(e, dest, t, size = 1) {
+  noise(e, dest, t, { type: 'highpass', freq: 1500, dur: 0.02 * size, gain: 0.9 });
+  noise(e, dest, t, { type: 'lowpass', freq: 1800 / size, dur: 0.25 * size, gain: 1.0 });
+  tone(e, dest, t, { freq: 120 / size, freqEnd: 40 / size, dur: 0.25 * size, gain: 0.8 });
+}
+
+export function musketFire(e, dest, t) {
+  // Flintlock: the flint snap, the pan flash, then the shot.
+  noise(e, dest, t, { freq: 3500, q: 4, dur: 0.015, gain: 0.4 });
+  noise(e, dest, t + 0.03, { freq: 1200, q: 1, dur: 0.05, gain: 0.3 });
+  gunshot(e, dest, t + 0.07, 1);
+}
+
+export function musketReload(e, dest, t, reload) {
+  // Ramrod strokes down the barrel, then the hammer cocks: that click means ready.
+  const strokes = [0.3, 0.45, 0.6].map(f => t + reload * f);
+  for (const s of strokes) {
+    noise(e, dest, s, { freq: 2200, freqEnd: 900, q: 5, dur: 0.12, gain: 0.25 });
+    tone(e, dest, s + 0.11, { freq: 1500, dur: 0.03, gain: 0.08 });
+  }
+  noise(e, dest, t + reload, { freq: 3000, q: 8, dur: 0.02, gain: 0.5 });
+  noise(e, dest, t + reload + 0.06, { freq: 2200, q: 8, dur: 0.025, gain: 0.45 });
+}
+
+export function cannonFire(e, dest, t) {
+  gunshot(e, dest, t, 2.2);
+  noise(e, dest, t + 0.05, { type: 'lowpass', freq: 300, dur: 1.4, gain: 0.7, attack: 0.05 });
+}
+
+export function cannonReady(e, dest, t) {
+  // The rammer thumps home, then the crew's brass bell rings twice.
+  tone(e, dest, t - 0.4, { freq: 90, freqEnd: 60, dur: 0.12, gain: 0.5 });
+  for (const dt of [0, 0.16]) {
+    for (const f of [880, 1320, 2210]) tone(e, dest, t + dt, { freq: f, dur: 0.35, gain: f === 880 ? 0.18 : 0.06 });
+  }
+}
+
+export function bounceThud(e, dest, t) {
+  tone(e, dest, t, { freq: 80, freqEnd: 40, dur: 0.15, gain: 0.8 });
+  noise(e, dest, t, { type: 'lowpass', freq: 600, dur: 0.15, gain: 0.7 });
+}
+
+export function mortarFire(e, dest, t) {
+  // A deep hollow thump straight up.
+  tone(e, dest, t, { freq: 70, freqEnd: 35, dur: 0.5, gain: 1.2 });
+  noise(e, dest, t, { type: 'lowpass', freq: 700, dur: 0.3, gain: 0.9 });
+  tone(e, dest, t + 0.02, { type: 'triangle', freq: 180, freqEnd: 120, dur: 0.2, gain: 0.3 });
+}
+
+export function mortarReady(e, dest, t) {
+  // The shell dropped into the tube: a hollow metal clunk.
+  tone(e, dest, t, { type: 'triangle', freq: 320, freqEnd: 290, dur: 0.25, gain: 0.35 });
+  tone(e, dest, t, { freq: 980, dur: 0.2, gain: 0.08 });
+  noise(e, dest, t, { freq: 1500, q: 3, dur: 0.03, gain: 0.3 });
+}
+
+export function shellWhistle(e, dest, t, dur = 1.2) {
+  // A falling whistle that tells you where the shell is about to land.
+  tone(e, dest, t, { type: 'sine', freq: 1900, freqEnd: 700, dur, gain: 0.2, attack: 0.1, curve: 'lin' });
+}
+
+export function explosion(e, dest, t, size = 1) {
+  tone(e, dest, t, { freq: 60, freqEnd: 28, dur: 0.9 * size, gain: 1.4 });
+  noise(e, dest, t, { type: 'lowpass', freq: 900, dur: 0.7 * size, gain: 1.3 });
+  for (let i = 0; i < 6; i++) noise(e, dest, t + 0.1 + i * rand(0.04, 0.09), { freq: rand(1500, 3000), q: 2, dur: 0.03, gain: 0.3 });
+}
+
+// ----- Enemy gunpowder fire -----
+
+export function enemyVolley(e, dest, t, shooters = 3) {
+  for (let i = 0; i < Math.min(6, shooters); i++) gunshot(e, dest, t + rand(0, 0.25), 0.9);
+}
+
+export function ballImpacts(e, dest, t) {
+  // Musket balls smacking into the earthwork around you.
+  for (let i = 0; i < 4; i++) {
+    const at = t + rand(0, 0.2);
+    noise(e, dest, at - 0.08, { freq: 4000, freqEnd: 2000, q: 6, dur: 0.07, gain: 0.08 });
+    noise(e, dest, at, { type: 'lowpass', freq: 900, dur: 0.05, gain: 0.5 });
+  }
+}
+
+export function cannonFar(e, dest, t, big = false) {
+  gunshot(e, dest, t, big ? 3 : 2.4);
+}
+
+export function incomingShot(e, dest, t, big = false) {
+  // The ball tearing through the air toward you, then slamming into the wall.
+  noise(e, dest, t, { freq: 800, freqEnd: 300, q: 2, dur: 0.6, gain: 0.3, attack: 0.3 });
+  tone(e, dest, t + 0.62, { freq: big ? 45 : 55, freqEnd: 28, dur: big ? 1.0 : 0.7, gain: big ? 1.6 : 1.2 });
+  noise(e, dest, t + 0.62, { type: 'lowpass', freq: 600, dur: big ? 0.9 : 0.6, gain: 1.2 });
+}
+
+export function bugle(e, dest, t) {
+  // A short cavalry-style bugle call instead of the medieval horn.
+  const notes = [[392, 0, 0.18], [523, 0.2, 0.18], [659, 0.4, 0.18], [784, 0.6, 0.6]];
+  for (const [f, dt, d] of notes) {
+    tone(e, dest, t + dt, { type: 'sawtooth', freq: f, dur: d, gain: 0.2, attack: 0.03, filter: { freq: 1800 }, curve: 'lin' });
+  }
+}

@@ -4,7 +4,7 @@ import { AudioEngine } from './audio.js';
 import { Speaker } from './speech.js';
 import { Input } from './input.js';
 import { Battle } from './game.js';
-import { CAMPAIGN, UPGRADES, BASE, endlessWave } from './data.js';
+import { ERAS, UPGRADES, BASE, endlessWave } from './data.js';
 import * as S from './sounds.js';
 
 const SAVE_KEY = 'ages-of-siege-save-v1';
@@ -12,7 +12,7 @@ const SAVE_KEY = 'ages-of-siege-save-v1';
 const defaultSave = () => ({
   gold: 0,
   upgrades: {},
-  cleared: 0,
+  eraCleared: {},   // waves cleared per era, e.g. { medieval: 10, gunpowder: 2 }
   introduced: {},
   endlessBest: 0,
   settings: { voice: 'game', rate: 1.1, difficulty: 'normal', volume: 90 },
@@ -24,6 +24,11 @@ function load() {
     if (!raw) return defaultSave();
     const s = Object.assign(defaultSave(), JSON.parse(raw));
     s.settings = Object.assign(defaultSave().settings, s.settings);
+    // Older saves kept one wave count for the medieval campaign.
+    if (typeof s.cleared === 'number') {
+      s.eraCleared = Object.assign({ medieval: s.cleared }, s.eraCleared);
+      delete s.cleared;
+    }
     return s;
   } catch (e) { return defaultSave(); }
 }
@@ -54,6 +59,7 @@ function show(name) {
   document.querySelectorAll('.screen').forEach(s => { s.hidden = s.id !== 'screen-' + name; });
   const screen = $('screen-' + name);
   if (name === 'campaign') renderCampaign();
+  if (name === 'era') renderEra();
   if (name === 'endless') renderEndless();
   if (name === 'settings') renderSettings();
   if (name !== 'battle') {
@@ -79,57 +85,92 @@ function el(tag, attrs = {}, text) {
 
 // ---------- Campaign ----------
 
+const clearedIn = (era) => save.eraCleared[ERAS[era].id] || 0;
+const eraUnlocked = (era) => era === 0 || clearedIn(era - 1) >= ERAS[era - 1].waves.length;
+const campaignEraLevel = () => { let lvl = 0; while (lvl + 1 < ERAS.length && eraUnlocked(lvl + 1)) lvl++; return lvl; };
+let eraOpen = 0;
+
 function renderCampaign() {
   $('campaign-gold').textContent = `Gold: ${save.gold}.`;
-  const list = $('campaign-waves');
+  const list = $('campaign-eras');
   list.innerHTML = '';
-  CAMPAIGN.forEach((w, i) => {
+  ERAS.forEach((era, n) => {
+    const li = el('li');
+    const total = era.waves.length;
+    if (eraUnlocked(n)) {
+      li.append(el('button', { type: 'button', onclick: () => { eraOpen = n; show('era'); } },
+        `${era.name}. ${clearedIn(n)} of ${total} waves cleared.`));
+    } else {
+      li.append(el('span', { class: 'locked' }, `${era.name}. Locked: clear the ${ERAS[n - 1].name.toLowerCase()} first.`));
+    }
+    list.append(li);
+  });
+}
+
+function renderEra() {
+  const era = ERAS[eraOpen];
+  $('era-title').textContent = era.name;
+  $('era-blurb').textContent = era.blurb;
+  $('era-gold').textContent = `Gold: ${save.gold}.`;
+  const list = $('era-waves');
+  list.innerHTML = '';
+  const cleared = clearedIn(eraOpen);
+  era.waves.forEach((w, i) => {
     const li = el('li');
     const label = `Wave ${i + 1}: ${w.title}`;
-    if (i < save.cleared) {
-      li.append(el('button', { type: 'button', onclick: () => startCampaign(i) }, `${label}. Cleared. Replay for half gold.`));
-    } else if (i === save.cleared) {
-      li.append(el('button', { type: 'button', onclick: () => startCampaign(i) }, `${label}. Play.`));
+    if (i < cleared) {
+      li.append(el('button', { type: 'button', onclick: () => startCampaign(eraOpen, i) }, `${label}. Cleared. Replay for half gold.`));
+    } else if (i === cleared) {
+      li.append(el('button', { type: 'button', onclick: () => startCampaign(eraOpen, i) }, `${label}. Play.`));
     } else {
       li.append(el('span', { class: 'locked' }, `${label}. Locked.`));
     }
     list.append(li);
   });
-  $('campaign-done').hidden = save.cleared < CAMPAIGN.length;
+  const done = cleared >= era.waves.length;
+  const next = ERAS[eraOpen + 1];
+  $('era-done').hidden = !done;
+  $('era-done').textContent = next
+    ? `You have conquered the ${era.name.toLowerCase()}. The ${next.name.toLowerCase()} is now open on the campaign page.`
+    : `You have conquered the ${era.name.toLowerCase()}. More eras are coming.`;
 }
 
-$('campaign-shop').addEventListener('click', () => openShop(save, () => show('campaign')));
+$('campaign-shop').addEventListener('click', () => openShop(save, () => show('campaign'), 'Done', campaignEraLevel()));
+$('era-shop').addEventListener('click', () => openShop(save, () => show('era'), 'Done', campaignEraLevel()));
 
-function startCampaign(i) {
-  current = { mode: 'campaign', index: i };
+function startCampaign(era, i) {
+  current = { mode: 'campaign', era, index: i };
   beginBattle({
-    wave: CAMPAIGN[i],
-    label: `Wave ${i + 1}`,
+    wave: ERAS[era].waves[i],
+    era,
+    label: `${ERAS[era].name}, wave ${i + 1}`,
     upgrades: save.upgrades,
-    onEnd: (r) => campaignResult(i, r),
+    onEnd: (r) => campaignResult(era, i, r),
   });
 }
 
-function campaignResult(i, r) {
+function campaignResult(era, i, r) {
+  const eraWaves = ERAS[era].waves;
   if (!r.victory) {
     persist(); // keeps enemy introductions; gold is untouched by a lost wave
     report('The wall has fallen', [
       `You defeated ${r.kills} enemies before the wall gave way. The gold from this attempt is lost.`,
       'Retry the wave with the upgrades you have, or replay a cleared wave to earn more gold.',
     ], [
-      ['Retry wave', () => startCampaign(i)],
-      ['Campaign', () => show('campaign')],
+      ['Retry wave', () => startCampaign(era, i)],
+      [ERAS[era].name, () => { eraOpen = era; show('era'); }],
     ], 'The wall has fallen.');
     return;
   }
-  const replay = i < save.cleared;
+  const replay = i < clearedIn(era);
   const rate = replay ? BASE.replayRate : 1;
-  const earned = Math.round((r.gold + BASE.clearBonus + BASE.clearBonusPerWave * i) * rate);
+  const globalIndex = era * 10 + i;
+  const earned = Math.round((r.gold + BASE.clearBonus + BASE.clearBonusPerWave * globalIndex) * rate);
   const repairCost = Math.round(r.damageTaken * BASE.repairCostPerPoint);
   const total = save.gold + earned;
   const repairs = Math.min(repairCost, total);
   save.gold = total - repairs;
-  if (!replay) save.cleared = i + 1;
+  if (!replay) save.eraCleared[ERAS[era].id] = i + 1;
   persist();
 
   const summary = `Earned ${earned} gold, ${repairs} spent on repairs, ${save.gold} to spend.`;
@@ -137,10 +178,13 @@ function campaignResult(i, r) {
     `${r.kills} enemies defeated.${replay ? ' Replay reward: half gold.' : ''}`,
     summary,
   ];
-  const buttons = [['Shop', () => openShop(save, () => show('campaign'))]];
-  if (i + 1 < CAMPAIGN.length && i + 1 <= save.cleared) buttons.push([`Next: wave ${i + 2}`, () => startCampaign(i + 1)]);
+  const eraDone = !replay && i + 1 === eraWaves.length;
+  if (eraDone && ERAS[era + 1]) lines.push(`The ${ERAS[era].name.toLowerCase()} is conquered. The ${ERAS[era + 1].name.toLowerCase()} is now open, and its weapons are in the shop.`);
+  const buttons = [['Shop', () => openShop(save, () => { eraOpen = era; show('era'); }, 'Done', campaignEraLevel())]];
+  if (i + 1 < eraWaves.length) buttons.push([`Next: wave ${i + 2}`, () => startCampaign(era, i + 1)]);
+  buttons.push([ERAS[era].name, () => { eraOpen = era; show('era'); }]);
   buttons.push(['Campaign', () => show('campaign')]);
-  report('Wave cleared', lines, buttons, `Wave cleared. ${summary}`);
+  report(eraDone ? 'Era conquered' : 'Wave cleared', lines, buttons, `Wave cleared. ${summary}`);
 }
 
 // ---------- Endless ----------
@@ -187,16 +231,18 @@ function endlessResult(r) {
   run.gold = total - repairs;
   const summary = `Earned ${earned} gold, ${repairs} spent on repairs, ${run.gold} to spend.`;
   run.wave++;
-  report(`Wave ${run.wave - 1} survived`, [`${r.kills} enemies defeated.`, summary], [
-    ['Shop', () => openShop(run, () => startEndless(), `Fight wave ${run.wave}`)],
+  const lines = [`${r.kills} enemies defeated.`, summary];
+  if (run.wave === 11) lines.push('The enemy has gunpowder now. New weapons are in the shop.');
+  report(`Wave ${run.wave - 1} survived`, lines, [
+    ['Shop', () => openShop(run, () => startEndless(), `Fight wave ${run.wave}`, run.wave > 10 ? 1 : 0)],
     [`Fight wave ${run.wave}`, () => startEndless()],
-  ], `Wave survived. ${summary}`);
+  ], `Wave survived. ${summary}${run.wave === 11 ? ' The enemy has gunpowder now.' : ''}`);
 }
 
 // ---------- Shop ----------
 
-function openShop(target, onDone, continueLabel = 'Done') {
-  shopCtx = { target, onDone };
+function openShop(target, onDone, continueLabel = 'Done', eraLevel = 0) {
+  shopCtx = { target, onDone, eraLevel };
   $('shop-continue').textContent = continueLabel;
   renderShop();
   show('shop');
@@ -207,13 +253,19 @@ function renderShop(focusId) {
   $('shop-gold').textContent = `Gold: ${target.gold}.`;
   const box = $('shop-items');
   box.innerHTML = '';
+  let group = -1;
   for (const u of UPGRADES) {
     if (u.requires && !target.upgrades[u.requires]) continue;
+    if ((u.era || 0) > shopCtx.eraLevel) continue;
+    if ((u.era || 0) !== group) {
+      group = u.era || 0;
+      box.append(el('h3', {}, ERAS[group].name));
+    }
     const level = target.upgrades[u.id] || 0;
     const max = u.costs.length;
     const div = el('div', { class: 'item' });
     const levelText = max > 1 ? ` (level ${level} of ${max})` : (level ? ' (owned)' : '');
-    div.append(el('h3', {}, u.name + levelText));
+    div.append(el('h4', {}, u.name + levelText));
     div.append(el('p', {}, u.desc));
     if (level >= max) {
       div.append(el('p', {}, max > 1 ? 'Fully upgraded.' : 'Owned.'));
@@ -281,6 +333,7 @@ async function beginBattle(opts) {
   battle = new Battle({
     engine, speaker,
     wave: opts.wave,
+    era: opts.era ?? opts.wave.era ?? 0,
     label: opts.label,
     upgrades: opts.upgrades,
     introduced: save.introduced,
@@ -289,7 +342,7 @@ async function beginBattle(opts) {
     onHud: (h) => {
       const text = h.state === 'ready'
         ? 'Ready. Tap or press F to begin.'
-        : `Aiming ${h.lane}${h.weapon === 'ballista' ? ' with the ballista' : ''}. Wall ${h.wall} percent. Enemies on the field: ${h.enemies}.${h.oil !== null ? ` Oil: ${h.oil}.` : ''}`;
+        : `Aiming ${h.lane}${h.weapon ? ` with the ${h.weapon.toLowerCase()}` : ''}. Wall ${h.wall} percent. Enemies on the field: ${h.enemies}.${h.oil !== null ? ` Oil: ${h.oil}.` : ''}`;
       if (text !== hudLast) { hudLast = text; $('hud-line').textContent = text; }
     },
     onPauseChange: (paused) => {
@@ -325,7 +378,8 @@ $('pause-quit').addEventListener('click', () => {
     run = null;
     show('endless');
   } else {
-    show('campaign');
+    eraOpen = current.era;
+    show('era');
   }
 });
 
@@ -372,6 +426,6 @@ $('reset-progress').addEventListener('click', () => {
 });
 
 // Exposed for automated testing only.
-window.__ages = { UPGRADES, save, get battle() { return battle; }, startCampaign, show };
+window.__ages = { UPGRADES, ERAS, save, get battle() { return battle; }, startCampaign, show };
 
 show('title');

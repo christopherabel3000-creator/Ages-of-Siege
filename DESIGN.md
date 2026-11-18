@@ -62,9 +62,10 @@ One set of game actions, each tied to a gesture and a key. Both run through the 
 | Aim one lane right | Swipe right | Right arrow |
 | Jump straight to a lane | — | 1 to 5 |
 | Fire the selected main weapon | Tap | Space |
-| Fire the crossbow | — | F |
-| Fire the ballista | — | B |
-| Switch main weapon (crossbow / ballista) | Two-finger swipe up or down | — |
+| Fire the light weapon (crossbow, or musket once bought) | — | F |
+| Fire the heavy weapon (ballista, or cannon once bought) | — | B |
+| Fire the mortar (gunpowder era) | Three-finger tap | M |
+| Switch main weapon (cycles through the ones you own) | Two-finger swipe up or down | — |
 | Pour boiling oil | Hold one finger still (half a second) | O |
 | Status report | Swipe up | S |
 | Repeat last callout | Swipe down | R |
@@ -98,11 +99,21 @@ The campaign has four eras of about 10 waves each, roughly 40 waves in total. Ea
   - Siege tower (boss, wave 10): a huge creaking tower on wheels. Archers on top fire volleys at the wall once it is in range; at the wall it drops a gangway for heavy damage and keeps attacking until destroyed. 40 hit points.
 - **Soundscape:** wind over open fields, crows, distant war drums.
 
-### Era 2 — Gunpowder
-- **Fortress:** a star fort with earthen banks.
-- **Your weapons:** muskets, cannons, mortars that land a shell in a lane after a delay.
-- **Enemies:** musket lines that fire volleys at the wall, cavalry charges (fast), their own siege cannons that pound you from long range, sappers digging quietly underground toward the wall.
-- **Boss:** a grand battery of siege guns.
+### Era 2 — Gunpowder (built Nov 18 2026)
+- **Fortress:** a star fort with earthen banks. Warning calls are a bugle instead of a horn.
+- **Your weapons (all must be bought):**
+  - Musket: replaces the crossbow on F. 4 damage, reload 1.6 s (paper cartridges: 1.25, 1.0). Ramrod strokes during reload, then a hammer click when ready.
+  - Cannon: replaces the ballista on B. The ball bounces down the lane: 4, 3, 2, 1 damage to the first four enemies. Reload 4.5 s (gun crew drill: 3.5, 2.7). A brass bell rings when ready.
+  - Mortar: third main weapon on M (three-finger tap on the phone). The shell lands about 2.5 s later where the closest enemy in your lane was standing, hitting everything within 12 m for 4 damage. A falling whistle plays where it will land. Reload 6 s (mortar crew: 4.5).
+- **Enemies:**
+  - Infantry: march to the wall, bayonets. 4 hit points.
+  - Musketeers: stop at 60 m and fire at the wall (1.5 damage each, every 5 s). 4 hit points.
+  - Cavalry: galloping, very fast (9 m/s), sabres at the wall. 3 hit points.
+  - Sappers: dig underground at 1.6 m/s; any weapon can hit them once within 40 m; at the wall they set off a mine (20 damage). 2 hit points.
+  - Siege cannons: towed to 95 m, then fire every 7 s for 7 damage. 6 hit points.
+- **Boss (wave 10):** the grand battery: a great gun (30 hit points, 10 damage every 6 s) leading siege cannons.
+- **Shop:** musket, paper cartridges (2), cannon, gun crew drill (2), mortar, mortar crew, earthen ramparts (4 levels, +25% wall each).
+- **Tuning (test bots):** a player who bought the new weapons clears the era; a player who didn't can get through waves 1 to 9 with heavy damage but is stopped by the grand battery.
 
 ### Era 3 — Industrial
 - **Fortress:** a concrete bunker line.
@@ -116,7 +127,9 @@ The campaign has four eras of about 10 waves each, roughly 40 waves in total. Ea
 - **Enemies:** tanks, helicopters, drone swarms, jets on bombing runs.
 - **Boss:** an armored column with air cover.
 
-Enemies learned in one era are replaced by new ones in the next, so each era feels fresh. When a new era begins, the fortress is rebuilt in the new material and the shop offers that era's weapons. (Open question: how much of your previous era's upgrades and gold carry over.)
+Enemies learned in one era are replaced by new ones in the next, so each era feels fresh.
+
+**Era rules (Christopher, Nov 18 2026):** each era is its own page in the campaign, opened by clearing every wave of the previous era. Gold, wall upgrades, defenses and medieval items like oil all carry over. Every new-era weapon must be bought; a player who enters unprepared is stuck with the old weapons and has a very tough time. This rewards doing well in the previous era and gives players something to buy.
 
 ---
 
@@ -177,7 +190,7 @@ Waves 1 to 3 stay easy on purpose (Christopher: doable at first, then ramping up
 - Any cleared wave can be replayed for extra gold.
 
 ### Endless
-- Starts in the medieval era. Every 10 waves the enemy advances an era, and you must adapt.
+- Starts in the medieval era. Every 10 waves the enemy advances an era, and you must adapt. (Built: waves 11+ are gunpowder, with a great gun every 10th wave; the shop offers gunpowder items from wave 11.)
 - Enemy waves are generated and grow harder over time.
 - You still shop between waves.
 - One failed wave ends the run. Score: waves survived and enemies defeated.
@@ -214,7 +227,7 @@ Waves 1 to 3 stay easy on purpose (Christopher: doable at first, then ramping up
 
 1. **Medieval prototype** — lanes, 3D sound, gestures and keyboard, crossbow, foot soldiers, knights, ladder crews, battering ram, first three campaign waves, shop, repairs, replays, a basic endless mode, settings. *(Built Nov 17 2026.)*
 2. **Full medieval era** — 10 waves, ballista, boiling oil, archers, siege tower boss, difficulty ramp. *(Built Nov 18 2026; tuning from playtests ongoing.)*
-3. **Gunpowder era**
+3. **Gunpowder era** *(built Nov 18 2026: era pages, three new weapons, five new enemies, grand battery boss, endless era change)*
 4. **Industrial era**
 5. **Modern era**
 6. **Recorded sound pass** — replace synthesized sounds.
@@ -226,6 +239,5 @@ Waves 1 to 3 stay easy on purpose (Christopher: doable at first, then ramping up
 ## 12. Open questions
 
 - Pace: exact balance of action and strategy (tune by playtesting).
-- How much carries over between eras (gold, upgrades).
 - Should replays pay half, or some other amount?
 - Charged shots and weapon switching: which gestures?

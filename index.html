@@ -20,17 +20,29 @@
         <button type="button" data-go="howto">How to play</button>
         <button type="button" data-go="settings">Settings</button>
       </div>
-      <p class="small">Prototype: the medieval era, waves 1 to 10.</p>
+      <p class="small">Two eras so far: medieval and gunpowder.</p>
     </section>
 
     <section id="screen-campaign" class="screen" hidden>
       <h2 tabindex="-1">Campaign</h2>
       <p id="campaign-gold"></p>
-      <ul id="campaign-waves" class="list"></ul>
-      <p id="campaign-done" hidden>You have conquered the medieval era. The gunpowder era is coming next.</p>
+      <p>Each era is its own chapter. Clear every wave in an era to open the next one. Your gold, walls and defenses carry over, but a new era's weapons must be bought.</p>
+      <ul id="campaign-eras" class="list"></ul>
       <div class="menu">
         <button type="button" id="campaign-shop">Shop</button>
         <button type="button" data-go="title">Back</button>
+      </div>
+    </section>
+
+    <section id="screen-era" class="screen" hidden>
+      <h2 tabindex="-1" id="era-title"></h2>
+      <p id="era-blurb"></p>
+      <p id="era-gold"></p>
+      <ul id="era-waves" class="list"></ul>
+      <p id="era-done" hidden></p>
+      <div class="menu">
+        <button type="button" id="era-shop">Shop</button>
+        <button type="button" data-go="campaign">Back to the campaign</button>
       </div>
     </section>
 
@@ -67,7 +79,8 @@
       <ul>
         <li>Swipe left or right: aim one lane over. A tick plays in that lane, higher in pitch toward the right.</li>
         <li>Tap: fire your main weapon.</li>
-        <li>Two-finger swipe up or down: switch between the crossbow and the ballista.</li>
+        <li>Two-finger swipe up or down: switch between your main weapons (crossbow or musket, ballista or cannon, and the mortar).</li>
+        <li>Three-finger tap: fire the mortar.</li>
         <li>Hold one finger still for half a second: pour boiling oil.</li>
         <li>Swipe up: status report.</li>
         <li>Swipe down: repeat the last callout.</li>
@@ -78,8 +91,9 @@
       <ul>
         <li>Left and right arrows: aim one lane over.</li>
         <li>1 to 5: jump straight to a lane, from far left to far right.</li>
-        <li>F: fire the crossbow.</li>
-        <li>B: fire the ballista.</li>
+        <li>F: fire the crossbow, or the musket once you own it.</li>
+        <li>B: fire the ballista, or the cannon once you own it.</li>
+        <li>M: fire the mortar.</li>
         <li>Space: fire whichever main weapon is selected.</li>
         <li>O: pour boiling oil.</li>
         <li>S: status report.</li>
@@ -95,10 +109,22 @@
         <li>Battering ram: a deep rumble and a chanting crew, always aimed at the gate in the center. It booms against the gate for heavy damage.</li>
         <li>Siege tower: a huge creaking tower on wheels. Archers on top fire volleys at the wall while it rolls in, and if it reaches the wall it drops a gangway and soldiers pour over.</li>
       </ul>
+      <h3>Gunpowder era enemies</h3>
+      <ul>
+        <li>Infantry: marching steps with rattling gear. Four damage each.</li>
+        <li>Musketeers: they stop about 60 meters out and fire volleys at the wall. Four damage each.</li>
+        <li>Cavalry: galloping hooves. Very fast, three damage each.</li>
+        <li>Sappers: quiet scraping underground. You can only hit them once they are within about 40 meters. If they reach the wall, they set off a mine.</li>
+        <li>Siege cannons: towed into place far out, then they fire heavy shots at the wall. Six damage to destroy one.</li>
+        <li>The grand battery: a great gun leading a line of siege cannons.</li>
+      </ul>
       <h3>Weapons</h3>
       <ul>
         <li>Crossbow: quick to reload, hits the closest enemy in your lane.</li>
         <li>Ballista: bought in the shop. Slow to reload, but its bolt pierces every enemy in the lane: two damage to the first enemy, one to each enemy behind it. You can fire it while the crossbow reloads, and the other way around. Three deep clacks mean it is ready.</li>
+        <li>Musket (gunpowder era): replaces the crossbow. Four damage per shot. Listen for the ramrod strokes, then the hammer click that means it is ready.</li>
+        <li>Cannon (gunpowder era): replaces the ballista. The ball bounces down the lane, four damage to the first enemy, then three, two and one. A bell rings when it is reloaded.</li>
+        <li>Mortar (gunpowder era): lobs a shell that lands where the closest enemy in your lane was standing, about two and a half seconds later, and hits everything near that spot for four damage. A falling whistle tells you where it will land.</li>
         <li>Boiling oil: bought in the shop. Pours on every enemy at the wall in your lane. It refills each wave. If nobody is at the wall in that lane, the pot is not used.</li>
       </ul>
       <h3>Gold and repairs</h3>
