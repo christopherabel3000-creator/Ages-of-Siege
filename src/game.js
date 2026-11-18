@@ -555,7 +555,8 @@ export class Battle {
     let gear = '';
     if (this.hasBallista) gear += ` ${this.weapon === 'ballista' ? 'Ballista' : 'Crossbow'} selected.`;
     if (this.up.oil) gear += ` ${this.oilLeft} oil.`;
-    return `Wall ${pct} percent. Aiming ${LANES[this.aim].name}.${gear} ${enemies}`;
+    // Enemy positions come first: that's what matters most mid-fight.
+    return `${enemies} Wall ${pct} percent. Aiming ${LANES[this.aim].name}.${gear}`;
   }
 
   _hud(force) {

@@ -48,7 +48,7 @@ Your shot hits the **closest enemy in the lane you are aiming at**. Weapons have
 - Hit: an impact at the enemy's position (flesh thud or armor ring).
 - Kill: a cry and a fall, plus a bright two-note chime that means "kill confirmed" (three notes for a ram), panned toward the lane of the kill. Nothing else in the game sounds like it.
 - Wall hit: stone thud, with cracking getting louder as the wall weakens. On the phone app, a vibration.
-- Status report on demand: wall strength, gold, and enemies on the field.
+- Status report on demand: where the enemies are first (count per lane), then wall strength, your aim, selected weapon and oil left.
 
 ---
 
