@@ -65,8 +65,10 @@ One set of game actions, each tied to a gesture and a key. Both run through the 
 | Fire the light weapon (crossbow, or musket once bought) | — | F |
 | Fire the heavy weapon (ballista, or cannon once bought) | — | B |
 | Fire the mortar (gunpowder era) | Three-finger tap | M |
+| Fire the machine gun (industrial era) | Hold one finger (fires while held); a tap fires a 3-round burst | Hold F |
+| Fire the anti-aircraft gun (industrial era) | Four-finger tap | A |
 | Switch main weapon (cycles through the ones you own) | Two-finger swipe up or down | — |
-| Pour boiling oil | Hold one finger still (half a second) | O |
+| Pour boiling oil (medieval and gunpowder eras only) | Hold one finger still (half a second) | O |
 | Status report | Swipe up | S |
 | Repeat last callout | Swipe down | R |
 | Pause / resume | Two-finger tap | Escape or P |
@@ -116,11 +118,22 @@ The campaign has four eras of about 10 waves each, roughly 40 waves in total. Ea
 - **Pricing rule (Christopher, Nov 18 2026):** a player must not be able to buy the whole era's shop on arrival. Gold carried over from the medieval era (about 4,000 to 5,000 for a full clear) buys one or two main weapons; the rest has to be earned during the era. Saves from before this change had their cheap gunpowder purchases refunded so they can be bought again at the new prices.
 - **Tuning (test bots):** a player who bought the new weapons clears the era; a player who didn't can get through waves 1 to 9 with heavy damage but is stopped by the grand battery.
 
-### Era 3 — Industrial
-- **Fortress:** a concrete bunker line.
-- **Your weapons:** machine gun (hold to fire, overheats), artillery, barbed wire.
-- **Enemies:** infantry waves, armored cars, early tanks, zeppelins droning overhead (aim up).
-- **Boss:** a zeppelin fleet.
+### Era 3 — Industrial (built Nov 19 2026)
+Christopher's decisions: oil is not used from this era on, which frees the one-finger hold for the machine gun; the anti-aircraft gun fires with A (four-finger tap on the phone); tanks take 20% damage from light weapons; barbed wire works like the wall: it takes damage and is repaired automatically after each wave, paid out of earnings.
+- **Fortress:** a concrete bunker line; warning calls are an officer's trench whistle.
+- **Your weapons (all must be bought):**
+  - Machine gun (light, replaces the musket): hold to fire 10 rounds a second, 1 damage each, at the closest enemy in your lane. Heat builds; a rising hiss warns you; at full heat it jams for 2.5 s (steam burst), then a double click means it is clear. Water jacket upgrade cools faster.
+  - Field artillery (heavy, replaces the cannon): lands 1.2 s after firing on the closest enemy in the lane, 5 damage to everything within 20 m. Gun layers upgrade reloads faster.
+  - Trench mortar: replaces the mortar: 6 damage, 1.8 s flight, faster reload.
+  - Anti-aircraft gun: fires at the closest aircraft in any lane, 3 damage. Crew upgrade reloads faster.
+  - Barbed wire: about 15 to 25 m out. Slows riflemen and gas troopers to 40% speed while it holds; each soldier crossing costs it 2 strength, each vehicle 15. Strength 60 / 100 / 150 by level. Repaired after the wave for half a gold per point.
+  - Reinforced concrete: +25% wall per level, four levels.
+- **Armor rule:** light weapons (crossbow, musket, machine gun, towers) do 20% damage to tanks and the landship, 50% to armored cars. Heavy weapons, shells and the anti-aircraft gun do full damage.
+- **Aircraft rule:** ground weapons can't reach zeppelins. The anti-aircraft gun does full damage; the machine gun (half damage) and archer towers can hit them a little.
+- **Enemies:** riflemen (5 hp, big groups, mud), armored cars (10 hp, fast, stop at 40 m and spray the wall), gas troopers (stop at 50 m; gas eats the wall 0.7 per second each until they die), tanks (25 hp, fire their gun from 70 m, crush the wall at the end), zeppelins (15 hp, drone overhead, bomb the wall from 30 m and hover).
+- **Boss (wave 10):** the landship, an 80 hp giant tank, with zeppelins above it.
+- **Shop prices:** machine gun 1800, water jacket 800/1200, field artillery 2200, gun layers 900/1300, trench mortar 1800, anti-aircraft gun 1600, crew 800, barbed wire 600/900/1300, reinforced concrete 700/1000/1400/1800. Arriving from the gunpowder era with roughly 1,000 to 2,500 gold buys one key weapon.
+- **Tuning (test bots):** a prepared player clears the era with damage in the late waves; an unprepared player is stopped around wave 7.
 
 ### Era 4 — Modern
 - **Fortress:** a fortified base.
@@ -191,7 +204,7 @@ Waves 1 to 3 stay easy on purpose (Christopher: doable at first, then ramping up
 - Any cleared wave can be replayed for extra gold.
 
 ### Endless
-- Starts in the medieval era. Every 10 waves the enemy advances an era, and you must adapt. (Built: waves 11+ are gunpowder, with a great gun every 10th wave; the shop offers gunpowder items from wave 11.)
+- Starts in the medieval era. Every 10 waves the enemy advances an era, and you must adapt. (Built: waves 11 to 20 are gunpowder with a great gun at wave 20; waves 21 and on are industrial with a landship every 10th wave; the shop offers each era's items as it arrives.)
 - Enemy waves are generated and grow harder over time.
 - You still shop between waves.
 - One failed wave ends the run. Score: waves survived and enemies defeated.
@@ -229,7 +242,7 @@ Waves 1 to 3 stay easy on purpose (Christopher: doable at first, then ramping up
 1. **Medieval prototype** — lanes, 3D sound, gestures and keyboard, crossbow, foot soldiers, knights, ladder crews, battering ram, first three campaign waves, shop, repairs, replays, a basic endless mode, settings. *(Built Nov 17 2026.)*
 2. **Full medieval era** — 10 waves, ballista, boiling oil, archers, siege tower boss, difficulty ramp. *(Built Nov 18 2026; tuning from playtests ongoing.)*
 3. **Gunpowder era** *(built Nov 18 2026: era pages, three new weapons, five new enemies, grand battery boss, endless era change)*
-4. **Industrial era**
+4. **Industrial era** *(built Nov 19 2026)*
 5. **Modern era**
 6. **Recorded sound pass** — replace synthesized sounds.
 7. **App Store** — iPhone app wrapper, direct-touch battlefield, vibration, store materials.
