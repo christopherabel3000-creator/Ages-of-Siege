@@ -193,7 +193,7 @@ function campaignResult(era, i, r) {
   const rate = replay ? BASE.replayRate : 1;
   const globalIndex = era * 10 + i;
   const earned = Math.round((r.gold + BASE.clearBonus + BASE.clearBonusPerWave * globalIndex) * rate);
-  const repairCost = Math.round(r.damageTaken * BASE.repairCostPerPoint);
+  const repairCost = Math.round(r.damageTaken * BASE.repairCostPerPoint + (r.wireDamage || 0) * 0.5);
   const total = save.gold + earned;
   const repairs = Math.min(repairCost, total);
   save.gold = total - repairs;
@@ -254,16 +254,17 @@ function endlessResult(r) {
   }
   const earned = r.gold + BASE.clearBonus;
   const total = run.gold + earned;
-  const repairs = Math.min(Math.round(r.damageTaken * BASE.repairCostPerPoint), total);
+  const repairs = Math.min(Math.round(r.damageTaken * BASE.repairCostPerPoint + (r.wireDamage || 0) * 0.5), total);
   run.gold = total - repairs;
   const summary = `Earned ${earned} gold, ${repairs} spent on repairs, ${run.gold} to spend.`;
   run.wave++;
   const lines = [`${r.kills} enemies defeated.`, summary];
   if (run.wave === 11) lines.push('The enemy has gunpowder now. New weapons are in the shop.');
+  if (run.wave === 21) lines.push('The industrial age has arrived: tanks, gas and zeppelins. New weapons are in the shop. Boiling oil is no longer used.');
   report(`Wave ${run.wave - 1} survived`, lines, [
-    ['Shop', () => openShop(run, () => startEndless(), `Fight wave ${run.wave}`, run.wave > 10 ? 1 : 0)],
+    ['Shop', () => openShop(run, () => startEndless(), `Fight wave ${run.wave}`, run.wave > 20 ? 2 : run.wave > 10 ? 1 : 0)],
     [`Fight wave ${run.wave}`, () => startEndless()],
-  ], `Wave survived. ${summary}${run.wave === 11 ? ' The enemy has gunpowder now.' : ''}`);
+  ], `Wave survived. ${summary}${run.wave === 11 ? ' The enemy has gunpowder now.' : ''}${run.wave === 21 ? ' The industrial age has arrived.' : ''}`);
 }
 
 // ---------- Shop ----------
@@ -384,6 +385,7 @@ async function beginBattle(opts) {
       opts.onEnd(r);
     },
   });
+  input.holdMode = battle.holdMode;
   input.enable();
   field.focus();
   battle.start();

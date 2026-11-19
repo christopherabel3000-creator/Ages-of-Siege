@@ -563,3 +563,237 @@ export function bugle(e, dest, t) {
     tone(e, dest, t + dt, { type: 'sawtooth', freq: f, dur: d, gain: 0.2, attack: 0.03, filter: { freq: 1800 }, curve: 'lin' });
   }
 }
+
+// =====================================================================
+// Industrial era
+// =====================================================================
+
+export function mudStep(e, dest, t) {
+  // A boot pulling out of mud: a wet squelch.
+  noise(e, dest, t, { type: 'lowpass', freq: 700, dur: 0.09, gain: 0.55 });
+  noise(e, dest, t + 0.05, { freq: rand(900, 1300), q: 4, dur: 0.06, gain: 0.25 });
+}
+
+export function trenchWhistle(e, dest, t) {
+  // The officer's whistle: the signal to go over the top.
+  const ctx = e.ctx;
+  const o = ctx.createOscillator();
+  o.type = 'sine'; o.frequency.value = 2900;
+  const trill = ctx.createOscillator(); trill.frequency.value = 28;
+  const tg = ctx.createGain(); tg.gain.value = 120;
+  trill.connect(tg); tg.connect(o.frequency);
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0.0001, t);
+  env.gain.linearRampToValueAtTime(0.25, t + 0.03);
+  env.gain.setValueAtTime(0.25, t + 0.35);
+  env.gain.linearRampToValueAtTime(0.0001, t + 0.4);
+  env.gain.setValueAtTime(0.0001, t + 0.5);
+  env.gain.linearRampToValueAtTime(0.25, t + 0.53);
+  env.gain.setValueAtTime(0.25, t + 1.2);
+  env.gain.linearRampToValueAtTime(0.0001, t + 1.3);
+  o.connect(env); env.connect(dest);
+  o.start(t); trill.start(t); o.stop(t + 1.35); trill.stop(t + 1.35);
+}
+
+// A continuous looping sound. Returns { stop(), setGain(v) }.
+function loop(e, dest, build) {
+  const ctx = e.ctx;
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, ctx.currentTime);
+  out.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.6);
+  out.connect(dest);
+  const nodes = build(ctx, out);
+  return {
+    stop() {
+      const t = ctx.currentTime;
+      out.gain.cancelScheduledValues(t);
+      out.gain.setValueAtTime(out.gain.value, t);
+      out.gain.linearRampToValueAtTime(0.0001, t + 0.4);
+      for (const n of nodes) { try { n.stop(t + 0.5); } catch (err) { /* stopped */ } }
+    },
+  };
+}
+
+export function engineLoop(e, dest) {
+  // Armored car: a revving petrol engine whine.
+  return loop(e, dest, (ctx, out) => {
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 95;
+    const wob = ctx.createOscillator(); wob.frequency.value = 7;
+    const wg = ctx.createGain(); wg.gain.value = 6;
+    wob.connect(wg); wg.connect(o.frequency);
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700;
+    const g = ctx.createGain(); g.gain.value = 0.18;
+    o.connect(f); f.connect(g); g.connect(out);
+    o.start(); wob.start();
+    return [o, wob];
+  });
+}
+
+export function treadLoop(e, dest, heavy = false) {
+  // Tank: a deep diesel throb under the rumble of treads.
+  return loop(e, dest, (ctx, out) => {
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = heavy ? 38 : 48;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = heavy ? 260 : 320;
+    const g = ctx.createGain(); g.gain.value = heavy ? 0.5 : 0.35;
+    const am = ctx.createOscillator(); am.frequency.value = heavy ? 5 : 7;
+    const ag = ctx.createGain(); ag.gain.value = 0.15;
+    am.connect(ag); ag.connect(g.gain);
+    o.connect(f); f.connect(g); g.connect(out);
+    const src = ctx.createBufferSource(); src.buffer = e.noise; src.loop = true;
+    const nf = ctx.createBiquadFilter(); nf.type = 'lowpass'; nf.frequency.value = 160;
+    const ng = ctx.createGain(); ng.gain.value = heavy ? 1.6 : 1.1;
+    src.connect(nf); nf.connect(ng); ng.connect(out);
+    o.start(); am.start(); src.start();
+    return [o, am, src];
+  });
+}
+
+export function treadClank(e, dest, t) {
+  for (const dt of [0, 0.09]) {
+    tone(e, dest, t + dt, { type: 'square', freq: rand(300, 380), dur: 0.05, gain: 0.08, filter: { freq: 1500 } });
+    noise(e, dest, t + dt, { freq: rand(1500, 2200), q: 5, dur: 0.03, gain: 0.3 });
+  }
+}
+
+export function droneLoop(e, dest) {
+  // Zeppelin: slow propellers and a deep, beating hum.
+  return loop(e, dest, (ctx, out) => {
+    const nodes = [];
+    for (const f of [62, 64.5, 93]) {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400;
+      const g = ctx.createGain(); g.gain.value = f > 90 ? 0.06 : 0.14;
+      o.connect(lp); lp.connect(g); g.connect(out); o.start(); nodes.push(o);
+    }
+    const prop = ctx.createOscillator(); prop.frequency.value = 9;
+    const pg = ctx.createGain(); pg.gain.value = 0.3;
+    const sink = ctx.createGain(); sink.gain.value = 0.7;
+    prop.connect(pg); pg.connect(sink.gain);
+    out.disconnect(); out.connect(sink); sink.connect(dest);
+    prop.start(); nodes.push(prop);
+    return nodes;
+  });
+}
+
+export function gasLoop(e, dest) {
+  // A steady hiss of gas from the canisters.
+  return loop(e, dest, (ctx, out) => {
+    const src = ctx.createBufferSource(); src.buffer = e.noise; src.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 3500;
+    const g = ctx.createGain(); g.gain.value = 0.22;
+    src.connect(f); f.connect(g); g.connect(out); src.start();
+    return [src];
+  });
+}
+
+export function gasOnWall(e, dest, t) {
+  // Gas seeping over the parapet: a soft sizzle.
+  noise(e, dest, t, { type: 'highpass', freq: 5000, dur: 0.5, gain: 0.12, attack: 0.15 });
+}
+
+export function enemyMgBurst(e, dest, t) {
+  for (let i = 0; i < 5; i++) gunshot(e, dest, t + i * 0.08, 0.6);
+}
+
+export function bulletsOnWall(e, dest, t) {
+  for (let i = 0; i < 5; i++) noise(e, dest, t + i * 0.08 + rand(0, 0.02), { freq: rand(1800, 2800), q: 4, dur: 0.025, gain: 0.35 });
+}
+
+export function tankGun(e, dest, t) { gunshot(e, dest, t, 2.6); }
+
+export function bombFall(e, dest, t) {
+  // A bomb whistling down from overhead, then the blast against the wall.
+  tone(e, dest, t, { type: 'sine', freq: 1400, freqEnd: 400, dur: 1.0, gain: 0.18, attack: 0.1, curve: 'lin' });
+  explosion(e, dest, t + 1.05, 1.2);
+}
+
+export function wireSnag(e, dest, t) {
+  // Barbed wire twanging and rattling as someone pushes through it.
+  tone(e, dest, t, { type: 'sawtooth', freq: rand(600, 800), freqEnd: rand(400, 500), dur: 0.25, gain: 0.07, filter: { type: 'bandpass', freq: 2000, q: 4 } });
+  for (let i = 0; i < 4; i++) noise(e, dest, t + i * 0.05, { freq: rand(3000, 4500), q: 8, dur: 0.02, gain: 0.25 });
+}
+
+export function wireCrush(e, dest, t) {
+  for (let i = 0; i < 6; i++) noise(e, dest, t + i * 0.04, { freq: rand(2500, 4000), q: 6, dur: 0.03, gain: 0.35 });
+  tone(e, dest, t, { type: 'sawtooth', freq: 500, freqEnd: 250, dur: 0.4, gain: 0.08, filter: { type: 'bandpass', freq: 1800, q: 3 } });
+}
+
+// ----- Your industrial weapons -----
+
+export function mgRound(e, dest, t) {
+  noise(e, dest, t, { type: 'highpass', freq: 1800, dur: 0.012, gain: 0.6 });
+  noise(e, dest, t, { type: 'lowpass', freq: 1500, dur: 0.05, gain: 0.55 });
+  tone(e, dest, t, { freq: 140, freqEnd: 70, dur: 0.04, gain: 0.35 });
+}
+
+export function mgJam(e, dest, t) {
+  // A metallic clack and a burst of steam: overheated.
+  tone(e, dest, t, { type: 'square', freq: 700, dur: 0.03, gain: 0.15 });
+  noise(e, dest, t + 0.03, { type: 'highpass', freq: 3000, dur: 1.2, gain: 0.35, attack: 0.05 });
+}
+
+export function mgCleared(e, dest, t) {
+  // The bolt cocked again: ready to fire.
+  noise(e, dest, t, { freq: 2500, q: 6, dur: 0.03, gain: 0.45 });
+  noise(e, dest, t + 0.1, { freq: 1800, q: 6, dur: 0.04, gain: 0.5 });
+}
+
+export function heatHiss(e, dest) {
+  // Rising hiss as the barrel heats. Volume is set by the game: setHeat(0..1).
+  const ctx = e.ctx;
+  const src = ctx.createBufferSource(); src.buffer = e.noise; src.loop = true;
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 3000; f.Q.value = 2;
+  const g = ctx.createGain(); g.gain.value = 0;
+  src.connect(f); f.connect(g); g.connect(dest); src.start();
+  return {
+    setHeat(h) {
+      const t = ctx.currentTime;
+      const v = h < 0.5 ? 0 : (h - 0.5) * 0.5;
+      g.gain.setTargetAtTime(v, t, 0.05);
+      f.frequency.setTargetAtTime(2500 + h * 3000, t, 0.05);
+    },
+    stop() { try { src.stop(); g.disconnect(); } catch (err) { /* stopped */ } },
+  };
+}
+
+export function artilleryFire(e, dest, t) {
+  gunshot(e, dest, t, 3);
+  noise(e, dest, t + 0.05, { freq: 900, freqEnd: 300, q: 2, dur: 1.0, gain: 0.3, attack: 0.05 });
+}
+
+export function artilleryReady(e, dest, t) {
+  // The breech slams shut.
+  tone(e, dest, t, { type: 'square', freq: 180, dur: 0.05, gain: 0.2 });
+  noise(e, dest, t, { freq: 1200, q: 3, dur: 0.06, gain: 0.6 });
+  tone(e, dest, t + 0.06, { freq: 1600, dur: 0.25, gain: 0.06 });
+}
+
+export function aaFire(e, dest, t) {
+  // A quick double pom-pom.
+  for (const dt of [0, 0.12]) {
+    gunshot(e, dest, t + dt, 1.4);
+  }
+}
+
+export function aaReady(e, dest, t) {
+  noise(e, dest, t, { freq: 2200, q: 5, dur: 0.03, gain: 0.35 });
+}
+
+export function flakBurst(e, dest, t) {
+  // A sharp crack high up, with shrapnel crackle.
+  noise(e, dest, t, { type: 'highpass', freq: 800, dur: 0.2, gain: 0.9 });
+  tone(e, dest, t, { freq: 160, freqEnd: 80, dur: 0.3, gain: 0.6 });
+  for (let i = 0; i < 6; i++) noise(e, dest, t + 0.1 + i * rand(0.03, 0.07), { freq: rand(2500, 4000), q: 3, dur: 0.02, gain: 0.25 });
+}
+
+export function zeppelinFall(e, dest, t) {
+  // Fabric tearing, gas burning, and a long fall.
+  noise(e, dest, t, { type: 'lowpass', freq: 1200, dur: 2.0, gain: 0.8, attack: 0.2 });
+  tone(e, dest, t, { type: 'sawtooth', freq: 120, freqEnd: 40, dur: 2.2, gain: 0.25, filter: { freq: 500 }, curve: 'lin' });
+  explosion(e, dest, t + 2.2, 1.6);
+}
+
+export function vehicleBlast(e, dest, t) {
+  explosion(e, dest, t, 1.3);
+  for (let i = 0; i < 4; i++) tone(e, dest, t + 0.2 + i * 0.1, { type: 'square', freq: rand(200, 500), dur: 0.08, gain: 0.08 });
+}

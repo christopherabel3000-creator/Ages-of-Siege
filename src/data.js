@@ -100,6 +100,54 @@ export const ENEMIES = {
     intro: 'The grand battery! The great gun leads a line of siege cannons. Thirty damage to silence it.',
     downText: 'The great gun is silenced!',
   },
+
+  // ----- Industrial era -----
+  // armor: fraction of damage taken from light weapons (crossbow, musket, machine gun, towers).
+  rifleman: {
+    name: 'rifleman', plural: 'riflemen',
+    hp: 5, speed: 4.5, gold: 12,
+    wallDamage: 2, hackInterval: 1.0, wireSlowed: true,
+    stepInterval: 0.42, pitch: 130,
+    intro: 'Riflemen, charging through the mud. Five damage each. The machine gun cuts them down.',
+  },
+  armoredCar: {
+    name: 'armored car', plural: 'armored cars',
+    hp: 10, speed: 7, gold: 30, vehicle: true, armor: 0.5,
+    standoff: 40, shotInterval: 1.0, shotDamage: 1, shot: 'mg',
+    stepInterval: 1.0, pitch: 120,
+    intro: 'An armored car. A fast engine whine. It stops close and sprays the wall with machine-gun fire. Light weapons do half damage. Ten damage to stop it.',
+  },
+  gasTroops: {
+    name: 'gas trooper', plural: 'gas troopers',
+    hp: 4, speed: 4, gold: 15, wireSlowed: true,
+    standoff: 50, gas: true, gasDamage: 0.7,
+    stepInterval: 0.45, pitch: 125,
+    intro: 'Gas troopers. They stop at a distance and release a gas cloud that eats at the wall until you kill them. Listen for the hiss.',
+  },
+  tank: {
+    name: 'tank', plural: 'tanks',
+    hp: 25, speed: 2, gold: 60, vehicle: true, armor: 0.2,
+    gunRange: 70, gunInterval: 6, gunDamage: 6,
+    wallDamage: 10, hackInterval: 3, single: true,
+    stepInterval: 0.7, pitch: 120,
+    intro: 'A tank! Clanking treads. Light weapons barely scratch it: one fifth damage. Use heavy weapons. It fires its gun as it closes in. Twenty-five damage to destroy it.',
+  },
+  zeppelin: {
+    name: 'zeppelin', plural: 'zeppelins',
+    hp: 15, speed: 2.5, gold: 50, flyer: true, height: 60, single: true,
+    bombRange: 30, bombInterval: 5, bombDamage: 6, hover: 4,
+    stepInterval: 99, pitch: 120,
+    intro: 'A zeppelin, droning overhead. Ground weapons cannot reach it. The anti-aircraft gun can, and the machine gun and archer towers can hurt it a little. It bombs the wall once it is close.',
+  },
+  landship: {
+    name: 'landship', plural: 'landships',
+    hp: 80, speed: 1.5, gold: 400, vehicle: true, armor: 0.2, boss: true, single: true,
+    gunRange: 80, gunInterval: 5, gunDamage: 10,
+    wallDamage: 15, hackInterval: 3,
+    stepInterval: 0.9, pitch: 110,
+    intro: 'The landship! A giant armored tank, with zeppelins in the sky above it. Eighty damage to destroy it. Light weapons barely scratch it.',
+    downText: 'The landship is destroyed!',
+  },
 };
 
 // Your weapons. Slots: light (F), heavy (B), mortar (M).
@@ -109,6 +157,10 @@ export const WEAPONS = {
   ballista: { slot: 'heavy', name: 'Ballista', kind: 'pierce', speed: 60 },
   cannon: { slot: 'heavy', name: 'Cannon', kind: 'bounce', speed: 120, damage: [4, 3, 2, 1], reload: [4.5, 3.5, 2.7] },
   mortar: { slot: 'mortar', name: 'Mortar', kind: 'shell', flight: 2.5, damage: 4, radius: 12, reload: [6, 4.5] },
+  machineGun: { slot: 'light', name: 'Machine gun', kind: 'auto', rate: 0.1, damage: 1, heatMax: 40, cool: [12, 18, 26], jam: 2.5 },
+  artillery: { slot: 'heavy', name: 'Field artillery', kind: 'shell', flight: 1.2, damage: 5, radius: 20, reload: [5, 4, 3.2] },
+  trenchMortar: { slot: 'mortar', name: 'Trench mortar', kind: 'shell', flight: 1.8, damage: 6, radius: 12, reload: [4, 3] },
+  aaGun: { slot: 'aa', name: 'Anti-aircraft gun', kind: 'aa', damage: 3, reload: [1.2, 0.8] },
 };
 
 export const UPGRADES = [
@@ -146,6 +198,26 @@ export const UPGRADES = [
     desc: 'Reload the mortar faster.' },
   { id: 'ramparts', name: 'Earthen ramparts', costs: [500, 800, 1100, 1500], era: 1,
     desc: 'Each level makes the wall 25 percent stronger, on top of thicker walls. Four levels.' },
+
+  // ----- Industrial era (era 2) -----
+  { id: 'machineGun', name: 'Machine gun', costs: [1800], era: 2,
+    desc: 'Replaces the musket as your light weapon. Hold F, or hold one finger on the screen, to fire a stream of bullets at the closest enemy in your lane. It heats up: a rising hiss warns you, and if it overheats it jams for a few seconds. A tap fires a short burst.' },
+  { id: 'waterJacket', name: 'Water jacket', costs: [800, 1200], era: 2, requires: 'machineGun',
+    desc: 'The machine gun cools faster. Two levels.' },
+  { id: 'artillery', name: 'Field artillery', costs: [2200], era: 2,
+    desc: 'Replaces the cannon on B. A shell lands just over a second later on the closest enemy in your lane, hitting everything within 20 meters for five damage.' },
+  { id: 'gunLayers', name: 'Gun layers', costs: [900, 1300], era: 2, requires: 'artillery',
+    desc: 'Reload the field artillery faster. Two levels.' },
+  { id: 'trenchMortar', name: 'Trench mortar', costs: [1800], era: 2,
+    desc: 'Upgrades your mortar, or gives you one: six damage, lands faster, reloads faster. Fires with M, or a three-finger tap.' },
+  { id: 'aaGun', name: 'Anti-aircraft gun', costs: [1600], era: 2,
+    desc: 'Fires at the closest aircraft, whichever lane it is in. Three damage per shot. Press A, or tap with four fingers.' },
+  { id: 'aaCrew', name: 'Anti-aircraft crew', costs: [800], era: 2, requires: 'aaGun',
+    desc: 'The anti-aircraft gun reloads faster.' },
+  { id: 'wire', name: 'Barbed wire', costs: [600, 900, 1300], era: 2,
+    desc: 'Wire across the field about 20 meters out. It slows riflemen and gas troopers as they push through, but takes damage from everything that crosses it, especially vehicles. Like the wall, it is repaired after each wave out of your earnings. Each level adds more wire.' },
+  { id: 'concrete', name: 'Reinforced concrete', costs: [700, 1000, 1400, 1800], era: 2,
+    desc: 'Each level makes the wall 25 percent stronger. Four levels.' },
 ];
 
 export const DIFFICULTY = {
@@ -449,14 +521,126 @@ const GUNPOWDER = [
   },
 ];
 
+// ----- Industrial era waves -----
+const INDUSTRIAL = [
+  {
+    title: 'Over the Top', pace: 1.0,
+    events: [
+      g(3, 2, 'rifleman', 4, true), g(16, 1, 'rifleman', 4), g(28, 3, 'rifleman', 4),
+      g(45, 0, 'rifleman', 4), g(48, 4, 'rifleman', 4),
+      drums(62, 8),
+      g(72, 2, 'rifleman', 5, true), g(86, 1, 'rifleman', 4), g(88, 3, 'rifleman', 4),
+      g(104, 0, 'rifleman', 5), g(106, 4, 'rifleman', 5),
+    ],
+  },
+  {
+    title: 'Engines in the Mud', pace: 1.05,
+    events: [
+      g(3, 2, 'armoredCar', 1, true), g(18, 0, 'rifleman', 4), g(22, 4, 'rifleman', 4),
+      g(36, 1, 'armoredCar', 1), g(50, 3, 'rifleman', 5),
+      drums(65, 8),
+      g(75, 0, 'armoredCar', 1, true), g(77, 4, 'armoredCar', 1), g(95, 2, 'rifleman', 6),
+      g(110, 1, 'rifleman', 4), g(112, 3, 'armoredCar', 1),
+    ],
+  },
+  {
+    title: 'The Yellow Cloud', pace: 1.1,
+    events: [
+      g(3, 2, 'gasTroops', 2, true), g(16, 0, 'rifleman', 4), g(26, 4, 'gasTroops', 2),
+      g(40, 1, 'armoredCar', 1), g(48, 3, 'rifleman', 5),
+      drums(62, 8),
+      g(72, 0, 'gasTroops', 2, true), g(72, 4, 'gasTroops', 2), g(90, 2, 'rifleman', 6),
+      g(104, 1, 'armoredCar', 1), g(108, 3, 'gasTroops', 3),
+    ],
+  },
+  {
+    title: 'Iron Monsters', pace: 1.15,
+    events: [
+      g(3, 2, 'tank', 1, true), g(14, 1, 'rifleman', 4), g(18, 3, 'rifleman', 4),
+      g(35, 0, 'armoredCar', 1), g(40, 4, 'gasTroops', 2),
+      g(55, 1, 'tank', 1),
+      drums(70, 8),
+      g(80, 3, 'tank', 1, true), g(82, 0, 'rifleman', 5), g(96, 4, 'armoredCar', 1), g(105, 2, 'rifleman', 6),
+    ],
+  },
+  {
+    title: 'Shadows in the Sky', pace: 1.2,
+    events: [
+      g(3, 2, 'zeppelin', 1, true), g(10, 0, 'rifleman', 4), g(14, 4, 'rifleman', 4),
+      g(30, 1, 'gasTroops', 2), g(38, 3, 'armoredCar', 1),
+      g(52, 0, 'zeppelin', 1), g(56, 4, 'tank', 1),
+      drums(72, 8),
+      g(82, 4, 'zeppelin', 1, true), g(85, 2, 'rifleman', 6), g(98, 1, 'armoredCar', 1), g(104, 3, 'gasTroops', 3),
+    ],
+  },
+  {
+    title: 'No Man\'s Land', pace: 1.3, crowd: 1.1,
+    events: [
+      g(3, 0, 'rifleman', 5, true), g(3, 4, 'rifleman', 5), g(18, 2, 'tank', 1),
+      g(28, 1, 'gasTroops', 2), g(32, 3, 'gasTroops', 2),
+      g(48, 0, 'armoredCar', 1), g(50, 4, 'armoredCar', 1), g(58, 2, 'zeppelin', 1),
+      drums(72, 8),
+      g(82, 1, 'rifleman', 6, true), g(84, 3, 'rifleman', 6), g(100, 2, 'tank', 1),
+      g(106, 0, 'gasTroops', 3), g(110, 4, 'zeppelin', 1),
+    ],
+  },
+  {
+    title: 'Steel Tide', pace: 1.4, crowd: 1.2,
+    events: [
+      g(3, 1, 'tank', 1, true), g(5, 3, 'tank', 1),
+      g(20, 2, 'rifleman', 6), g(30, 0, 'armoredCar', 1), g(32, 4, 'armoredCar', 1),
+      g(45, 1, 'gasTroops', 3), g(50, 3, 'zeppelin', 1),
+      drums(66, 8),
+      g(76, 0, 'tank', 1, true), g(78, 4, 'rifleman', 6), g(92, 2, 'armoredCar', 1),
+      g(98, 1, 'rifleman', 6), g(106, 3, 'gasTroops', 3), g(112, 2, 'zeppelin', 1),
+    ],
+  },
+  {
+    title: 'The Air Raid', pace: 1.45, crowd: 1.3,
+    events: [
+      g(3, 0, 'zeppelin', 1, true), g(3, 4, 'zeppelin', 1), g(12, 2, 'rifleman', 6),
+      g(25, 1, 'gasTroops', 3), g(30, 3, 'armoredCar', 1), g(42, 2, 'zeppelin', 1),
+      g(50, 0, 'rifleman', 6), g(55, 4, 'tank', 1),
+      drums(68, 6),
+      g(76, 1, 'zeppelin', 1, true), g(78, 3, 'zeppelin', 1), g(90, 2, 'rifleman', 7),
+      g(100, 0, 'armoredCar', 1), g(104, 4, 'gasTroops', 3), g(115, 2, 'tank', 1),
+    ],
+  },
+  {
+    title: 'Gas and Gunfire', pace: 1.5, crowd: 1.35,
+    events: [
+      g(3, 1, 'gasTroops', 3, true), g(5, 3, 'gasTroops', 3), g(14, 2, 'tank', 1),
+      g(26, 0, 'rifleman', 6), g(30, 4, 'armoredCar', 1),
+      g(44, 2, 'gasTroops', 3), g(48, 1, 'zeppelin', 1), g(52, 3, 'rifleman', 6),
+      drums(66, 6),
+      g(76, 0, 'tank', 1, true), g(78, 4, 'tank', 1), g(90, 2, 'armoredCar', 1),
+      g(98, 1, 'gasTroops', 3), g(102, 3, 'rifleman', 7), g(114, 0, 'zeppelin', 1), g(116, 4, 'rifleman', 6),
+    ],
+  },
+  {
+    title: 'The Landship', pace: 1.55, crowd: 1.4,
+    events: [
+      g(3, 2, 'landship', 1, true), g(6, 0, 'zeppelin', 1), g(6, 4, 'zeppelin', 1),
+      g(15, 1, 'rifleman', 6), g(18, 3, 'rifleman', 6),
+      g(35, 0, 'armoredCar', 1), g(38, 4, 'gasTroops', 3),
+      g(50, 1, 'tank', 1), g(55, 3, 'gasTroops', 3),
+      drums(70, 6),
+      g(78, 0, 'zeppelin', 1, true), g(80, 4, 'tank', 1), g(92, 2, 'rifleman', 7),
+      g(100, 1, 'armoredCar', 1), g(104, 3, 'zeppelin', 1), g(115, 0, 'rifleman', 7), g(118, 4, 'gasTroops', 3),
+    ],
+  },
+];
+
 // Each era is its own page in the campaign. Clear bonus counts waves across all eras.
 export const ERAS = [
   { id: 'medieval', name: 'Medieval era', blurb: 'Stone walls, crossbows and battering rams.', waves: CAMPAIGN },
   { id: 'gunpowder', name: 'Gunpowder era', blurb: 'A star fort, muskets and cannon fire. Its weapons must be bought in the shop.', waves: GUNPOWDER },
+  { id: 'industrial', name: 'Industrial era', blurb: 'A concrete bunker line, machine guns, tanks and zeppelins. Its weapons must be bought in the shop. Boiling oil is no longer used.', waves: INDUSTRIAL },
 ];
 
-// Endless: generated waves that grow harder. Medieval enemies only for now.
+// Endless: generated waves that grow harder. Every 10 waves the enemy advances an era.
 export function endlessWave(n) {
+  if (n > 20) return endlessIndustrial(n);
   if (n > 10) return endlessGunpowder(n);
   const events = [];
   const groups = Math.round(7 + n * 1.5);
@@ -510,4 +694,30 @@ function endlessGunpowder(n) {
   }
   if (n % 10 === 0) events.push({ t: 3, lane: 2, type: 'greatGun', count: 1 });
   return { title: `Endless wave ${n}`, events, pace: Math.min(2, 1.2 + 0.05 * k), era: 1 };
+}
+
+function endlessIndustrial(n) {
+  const k = n - 20; // waves into the industrial era
+  const events = [];
+  const groups = Math.round(9 + k * 1.5);
+  const gap = Math.max(6, 13 - k * 0.6);
+  const types = ['rifleman', 'rifleman', 'armoredCar', 'gasTroops'];
+  if (k >= 2) types.push('tank');
+  if (k >= 3) types.push('zeppelin');
+  let t = 3, lastLane = -1;
+  for (let i = 0; i < groups; i++) {
+    let lane;
+    do { lane = Math.floor(Math.random() * 5); } while (lane === lastLane);
+    lastLane = lane;
+    const type = types[Math.floor(Math.random() * types.length)];
+    let count;
+    if (type === 'tank' || type === 'zeppelin' || type === 'armoredCar') count = 1;
+    else if (type === 'gasTroops') count = 2 + Math.floor(k / 5);
+    else count = 3 + Math.floor(Math.random() * 2) + Math.floor(k / 4);
+    events.push({ t: Math.round(t), lane, type, count, horn: i === 0 });
+    t += gap * (0.7 + Math.random() * 0.6);
+    if (i === Math.floor(groups / 2)) { events.push({ t: Math.round(t), drums: 8 }); t += 12; }
+  }
+  if (n % 10 === 0) events.push({ t: 3, lane: 2, type: 'landship', count: 1 });
+  return { title: `Endless wave ${n}`, events, pace: Math.min(2, 1.3 + 0.05 * k), era: 2 };
 }

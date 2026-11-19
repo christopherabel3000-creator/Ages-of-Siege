@@ -20,7 +20,7 @@
         <button type="button" data-go="howto">How to play</button>
         <button type="button" data-go="settings">Settings</button>
       </div>
-      <p class="small">Two eras so far: medieval and gunpowder.</p>
+      <p class="small">Three eras so far: medieval, gunpowder and industrial.</p>
     </section>
 
     <section id="screen-campaign" class="screen" hidden>
@@ -81,7 +81,9 @@
         <li>Tap: fire your main weapon.</li>
         <li>Two-finger swipe up or down: switch between your main weapons (crossbow or musket, ballista or cannon, and the mortar).</li>
         <li>Three-finger tap: fire the mortar.</li>
-        <li>Hold one finger still for half a second: pour boiling oil.</li>
+        <li>Hold one finger still for half a second: pour boiling oil (medieval and gunpowder eras).</li>
+        <li>Hold one finger: fire the machine gun for as long as you hold (industrial era on).</li>
+        <li>Four-finger tap: fire the anti-aircraft gun.</li>
         <li>Swipe up: status report.</li>
         <li>Swipe down: repeat the last callout.</li>
         <li>Two-finger tap: pause or resume.</li>
@@ -91,8 +93,9 @@
       <ul>
         <li>Left and right arrows: aim one lane over.</li>
         <li>1 to 5: jump straight to a lane, from far left to far right.</li>
-        <li>F: fire the crossbow, or the musket once you own it.</li>
-        <li>B: fire the ballista, or the cannon once you own it.</li>
+        <li>F: fire the crossbow, or the musket once you own it. With the machine gun, hold F to keep firing.</li>
+        <li>A: fire the anti-aircraft gun.</li>
+        <li>B: fire the ballista, or the cannon, or the field artillery, whichever is your best.</li>
         <li>M: fire the mortar.</li>
         <li>Space: fire whichever main weapon is selected.</li>
         <li>O: pour boiling oil.</li>
@@ -118,6 +121,15 @@
         <li>Siege cannons: towed into place far out, then they fire heavy shots at the wall. Six damage to destroy one.</li>
         <li>The grand battery: a great gun leading a line of siege cannons.</li>
       </ul>
+      <h3>Industrial era enemies</h3>
+      <ul>
+        <li>Riflemen: big groups squelching through the mud. Five damage each.</li>
+        <li>Armored cars: a fast engine whine. They stop about 40 meters out and spray the wall with machine-gun fire. Light weapons do half damage.</li>
+        <li>Gas troopers: they stop about 50 meters out and release a hissing gas cloud that eats at the wall until you kill them.</li>
+        <li>Tanks: a deep engine throb and clanking treads. Light weapons do one fifth damage. They fire their gun as they close in, and crush the wall if they reach it.</li>
+        <li>Zeppelins: a deep droning hum overhead. Only the anti-aircraft gun hits them properly; the machine gun and towers do a little. They drop bombs once close.</li>
+        <li>The landship: a giant tank with zeppelins above it.</li>
+      </ul>
       <h3>Weapons</h3>
       <ul>
         <li>Crossbow: quick to reload, hits the closest enemy in your lane.</li>
@@ -125,7 +137,12 @@
         <li>Musket (gunpowder era): replaces the crossbow. Four damage per shot. Listen for the ramrod strokes, then the hammer click that means it is ready.</li>
         <li>Cannon (gunpowder era): replaces the ballista. The ball bounces down the lane, four damage to the first enemy, then three, two and one. A bell rings when it is reloaded.</li>
         <li>Mortar (gunpowder era): lobs a shell that lands where the closest enemy in your lane was standing, about two and a half seconds later, and hits everything near that spot for four damage. A falling whistle tells you where it will land.</li>
-        <li>Boiling oil: bought in the shop. Pours on every enemy at the wall in your lane. It refills each wave. If nobody is at the wall in that lane, the pot is not used.</li>
+        <li>Machine gun (industrial era): replaces the musket. Hold to fire a stream of bullets at the closest enemy in your lane. A rising hiss means it is getting hot; if it overheats it jams for a few seconds, then a double click means it is clear.</li>
+        <li>Field artillery (industrial era): replaces the cannon. Lands a second after firing on the closest enemy in your lane and hits everything within 20 meters.</li>
+        <li>Trench mortar (industrial era): a stronger, faster mortar.</li>
+        <li>Anti-aircraft gun (industrial era): fires at the closest aircraft in any lane.</li>
+        <li>Barbed wire (industrial era): slows riflemen and gas troopers about 20 meters out. Vehicles tear through it. It is repaired after each wave, like the wall.</li>
+        <li>Boiling oil: bought in the shop. Used in the medieval and gunpowder eras only. Pours on every enemy at the wall in your lane. It refills each wave. If nobody is at the wall in that lane, the pot is not used.</li>
       </ul>
       <h3>Gold and repairs</h3>
       <p>You earn gold for every kill and a bonus for clearing a wave. After each wave, repairs to the wall are paid automatically out of your gold, so the wall always starts the next wave at full strength. The less damage you take, the more you have to spend.</p>
