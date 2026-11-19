@@ -132,19 +132,19 @@ export const UPGRADES = [
     desc: 'Pour boiling oil on every enemy at the wall in the lane you are aiming at. Press O, or hold one finger still on the screen. Two pots per wave, plus one more for each extra level.' },
 
   // ----- Gunpowder era (era 1) -----
-  { id: 'musket', name: 'Musket', costs: [300], era: 1,
+  { id: 'musket', name: 'Musket', costs: [1500], era: 1,
     desc: 'Replaces the crossbow as your quick weapon. Four damage per shot, enough to drop infantry in one hit, but a slower reload. Fires with F.' },
-  { id: 'cartridges', name: 'Paper cartridges', costs: [150, 250], era: 1, requires: 'musket',
+  { id: 'cartridges', name: 'Paper cartridges', costs: [700, 1000], era: 1, requires: 'musket',
     desc: 'Reload the musket faster. Two levels.' },
-  { id: 'cannon', name: 'Cannon', costs: [400], era: 1,
+  { id: 'cannon', name: 'Cannon', costs: [2000], era: 1,
     desc: 'Replaces the ballista as your heavy weapon. The ball bounces down the lane: four damage to the first enemy, then three, two and one to the next. Fires with B.' },
-  { id: 'drill', name: 'Gun crew drill', costs: [200, 300], era: 1, requires: 'cannon',
+  { id: 'drill', name: 'Gun crew drill', costs: [800, 1100], era: 1, requires: 'cannon',
     desc: 'Reload the cannon faster. Two levels.' },
-  { id: 'mortar', name: 'Mortar', costs: [450], era: 1,
+  { id: 'mortar', name: 'Mortar', costs: [2500], era: 1,
     desc: 'A third main weapon. Lobs a shell that lands where the closest enemy in your lane was standing, about two and a half seconds later, and blasts everything near it for four damage. Best against enemies that stand still. Fires with M, or a three-finger tap.' },
-  { id: 'mortarCrew', name: 'Mortar crew', costs: [250], era: 1, requires: 'mortar',
+  { id: 'mortarCrew', name: 'Mortar crew', costs: [1000], era: 1, requires: 'mortar',
     desc: 'Reload the mortar faster.' },
-  { id: 'ramparts', name: 'Earthen ramparts', costs: [220, 320, 450, 600], era: 1,
+  { id: 'ramparts', name: 'Earthen ramparts', costs: [500, 800, 1100, 1500], era: 1,
     desc: 'Each level makes the wall 25 percent stronger, on top of thicker walls. Four levels.' },
 ];
 

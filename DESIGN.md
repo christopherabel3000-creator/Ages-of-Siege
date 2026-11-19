@@ -112,7 +112,8 @@ The campaign has four eras of about 10 waves each, roughly 40 waves in total. Ea
   - Sappers: dig underground at 1.6 m/s; any weapon can hit them once within 40 m; at the wall they set off a mine (20 damage). 2 hit points.
   - Siege cannons: towed to 95 m, then fire every 7 s for 7 damage. 6 hit points.
 - **Boss (wave 10):** the grand battery: a great gun (30 hit points, 10 damage every 6 s) leading siege cannons.
-- **Shop:** musket, paper cartridges (2), cannon, gun crew drill (2), mortar, mortar crew, earthen ramparts (4 levels, +25% wall each).
+- **Shop:** musket 1500, paper cartridges 700/1000, cannon 2000, gun crew drill 800/1100, mortar 2500, mortar crew 1000, earthen ramparts 500/800/1100/1500 (+25% wall each).
+- **Pricing rule (Christopher, Nov 18 2026):** a player must not be able to buy the whole era's shop on arrival. Gold carried over from the medieval era (about 4,000 to 5,000 for a full clear) buys one or two main weapons; the rest has to be earned during the era. Saves from before this change had their cheap gunpowder purchases refunded so they can be bought again at the new prices.
 - **Tuning (test bots):** a player who bought the new weapons clears the era; a player who didn't can get through waves 1 to 9 with heavy damage but is stopped by the grand battery.
 
 ### Era 3 — Industrial

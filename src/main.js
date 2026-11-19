@@ -9,7 +9,10 @@ import * as S from './sounds.js';
 
 const SAVE_KEY = 'ages-of-siege-save-v1';
 
+const SAVE_VERSION = 2;
+
 const defaultSave = () => ({
+  version: SAVE_VERSION,
   gold: 0,
   upgrades: {},
   eraCleared: {},   // waves cleared per era, e.g. { medieval: 10, gunpowder: 2 }
@@ -22,15 +25,39 @@ function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return defaultSave();
-    const s = Object.assign(defaultSave(), JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    const oldVersion = parsed.version || 1;
+    const s = Object.assign(defaultSave(), parsed);
     s.settings = Object.assign(defaultSave().settings, s.settings);
     // Older saves kept one wave count for the medieval campaign.
     if (typeof s.cleared === 'number') {
       s.eraCleared = Object.assign({ medieval: s.cleared }, s.eraCleared);
       delete s.cleared;
     }
+    if (oldVersion < 2) refundCheapGunpowder(s);
+    s.version = SAVE_VERSION;
     return s;
   } catch (e) { return defaultSave(); }
+}
+
+// Version 2 raised gunpowder-era prices. Anything bought at the old, too-low prices
+// is refunded at what was paid, so it can be bought again at the new prices.
+const OLD_GUNPOWDER_COSTS = {
+  musket: [300], cartridges: [150, 250], cannon: [400], drill: [200, 300],
+  mortar: [450], mortarCrew: [250], ramparts: [220, 320, 450, 600],
+};
+let refundNote = '';
+function refundCheapGunpowder(s) {
+  let refund = 0;
+  for (const [id, costs] of Object.entries(OLD_GUNPOWDER_COSTS)) {
+    const lvl = s.upgrades[id] || 0;
+    for (let i = 0; i < lvl; i++) refund += costs[i] || 0;
+    delete s.upgrades[id];
+  }
+  if (refund) {
+    s.gold += refund;
+    refundNote = `Gunpowder era prices have gone up. Your gunpowder purchases were refunded: ${refund} gold returned. You now have ${s.gold} gold.`;
+  }
 }
 
 function persist() {
@@ -429,3 +456,9 @@ $('reset-progress').addEventListener('click', () => {
 window.__ages = { UPGRADES, ERAS, save, get battle() { return battle; }, startCampaign, show };
 
 show('title');
+if (refundNote) {
+  persist();
+  const note = el('p', { id: 'refund-note', tabindex: '-1' }, refundNote);
+  $('screen-title').querySelector('.menu').before(note);
+  requestAnimationFrame(() => note.focus());
+}
